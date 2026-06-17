@@ -42,7 +42,7 @@ export default function BackendStation() {
 
   return (
     <group ref={panelRef} position={[0, STATION_Y, 0]}>
-      <Html center distanceFactor={11} transform style={{ width: 500, height: 480, overflow: 'hidden', userSelect: 'none' }}>
+      <Html center distanceFactor={11} style={{ width: 760, height: 600, overflow: 'hidden', userSelect: 'none' }}>
         <ReactorConsole system={system} isLoading={isLoading} isError={isError} />
       </Html>
     </group>
@@ -112,7 +112,7 @@ function ReactorConsole({
         width: '100%',
         height: '100%',
         boxSizing: 'border-box',
-        padding: '14px 18px',
+        padding: '20px 26px',
       }}
     >
       <div style={{ position: 'relative', zIndex: 1 }}>
@@ -122,30 +122,30 @@ function ReactorConsole({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            marginBottom: 12,
-            paddingBottom: 10,
+            marginBottom: 18,
+            paddingBottom: 15,
             borderBottom: '1px solid rgba(34,211,238,0.18)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
             <div
               style={{
-                width: 8,
-                height: 8,
+                width: 10,
+                height: 10,
                 borderRadius: '50%',
                 background: statusColor,
                 boxShadow: `0 0 10px ${statusColor}`,
                 animation: 'status-led 1.8s ease-in-out infinite',
               }}
             />
-            <span style={{ color: '#22d3ee', fontSize: 11, fontWeight: 700, letterSpacing: 2 }}>
+            <span style={{ color: '#22d3ee', fontSize: 16, fontWeight: 700, letterSpacing: 2 }}>
               BACKEND REACTOR
             </span>
-            <span style={{ color: '#334155', fontSize: 9 }}>//</span>
-            <span style={{ color: '#475569', fontSize: 9 }}>DIAGNOSTICS</span>
+            <span style={{ color: '#334155', fontSize: 12 }}>//</span>
+            <span style={{ color: '#475569', fontSize: 12 }}>DIAGNOSTICS</span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#334155', fontSize: 9 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, color: '#334155', fontSize: 12 }}>
             <span>
               ADDR:{' '}
               <span
@@ -163,7 +163,7 @@ function ReactorConsole({
         </div>
 
         {isLoading && (
-          <div style={{ color: '#475569', fontSize: 10, textAlign: 'center', padding: 24 }}>
+          <div style={{ color: '#475569', fontSize: 14, textAlign: 'center', padding: 34 }}>
             <span style={{ animation: 'data-flicker 1.5s ease-in-out infinite' }}>
               connecting to Spring Boot service…
             </span>
@@ -171,9 +171,9 @@ function ReactorConsole({
         )}
 
         {isError && (
-          <div style={{ color: '#ef4444', fontSize: 10, textAlign: 'center', padding: 24 }}>
+          <div style={{ color: '#ef4444', fontSize: 14, textAlign: 'center', padding: 34 }}>
             <div style={{ marginBottom: 4 }}>⚠ BACKEND OFFLINE</div>
-            <div style={{ color: '#475569', fontSize: 8 }}>
+            <div style={{ color: '#475569', fontSize: 11 }}>
               start: java -jar target/orbitcv-1.0.0.jar
             </div>
           </div>
@@ -186,8 +186,8 @@ function ReactorConsole({
               style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr 1fr',
-                gap: '10px 24px',
-                marginBottom: 14,
+                gap: '16px 34px',
+                marginBottom: 20,
               }}
             >
               <MetricCell label="SERVICE"  value={system.service}           color="#22d3ee" />
@@ -203,9 +203,9 @@ function ReactorConsole({
               style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
-                gap: '8px 24px',
-                marginBottom: 14,
-                paddingTop: 10,
+                gap: '13px 34px',
+                marginBottom: 20,
+                paddingTop: 15,
                 borderTop: '1px solid rgba(34,211,238,0.1)',
               }}
             >
@@ -220,20 +220,20 @@ function ReactorConsole({
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
-                paddingTop: 8,
+                paddingTop: 12,
                 borderTop: '1px solid rgba(34,211,238,0.08)',
-                marginBottom: 12,
+                marginBottom: 18,
               }}
             >
-              <div style={{ fontSize: 8, color: '#334155' }}>
+              <div style={{ fontSize: 11, color: '#334155' }}>
                 <span style={{ color: '#475569' }}>STARTED</span>{' '}
                 {new Date(system.startedAt).toLocaleTimeString()}
               </div>
-              <div style={{ fontSize: 8, color: '#334155' }}>
+              <div style={{ fontSize: 11, color: '#334155' }}>
                 <span style={{ color: '#475569' }}>UPTIME</span>{' '}
                 <span ref={uptimeRef} style={{ color: '#22c55e' }}>00:00:00</span>
               </div>
-              <div style={{ fontSize: 8, color: '#334155', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ fontSize: 11, color: '#334155', maxWidth: 250, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 <span style={{ color: '#475569' }}>ORIGIN</span>{' '}
                 <span style={{ color: '#6366f1' }}>{system.frontendOrigin}</span>
               </div>
@@ -245,18 +245,18 @@ function ReactorConsole({
         <div
           style={{
             borderTop: '1px solid rgba(34,211,238,0.1)',
-            paddingTop: 8,
+            paddingTop: 12,
           }}
         >
-          <div style={{ color: '#334155', fontSize: 7.5, letterSpacing: 1, marginBottom: 5 }}>
+          <div style={{ color: '#334155', fontSize: 10.5, letterSpacing: 1, marginBottom: 8 }}>
             ▸ SYSTEM LOG
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {logs.slice(-5).map((line, i) => (
               <div
                 key={`${line}-${i}`}
                 style={{
-                  fontSize: 8,
+                  fontSize: 11,
                   color: line.startsWith('[OK]')
                     ? '#22c55e'
                     : line.startsWith('[→]')
@@ -289,11 +289,11 @@ function MetricCell({
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <span style={{ color: '#2d3f56', fontSize: 7.5, letterSpacing: 1 }}>{label}</span>
+      <span style={{ color: '#2d3f56', fontSize: 10.5, letterSpacing: 1 }}>{label}</span>
       <span
         style={{
           color,
-          fontSize: 9.5,
+          fontSize: 13.5,
           fontWeight: 600,
           animation: pulse ? 'data-flicker 6s ease-in-out infinite' : 'none',
         }}
@@ -317,12 +317,12 @@ function CountBar({
 }) {
   const pct = Math.min(100, (count / max) * 100)
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          fontSize: 7.5,
+          fontSize: 10.5,
           color: '#2d3f56',
         }}
       >
@@ -331,7 +331,7 @@ function CountBar({
       </div>
       <div
         style={{
-          height: 3,
+          height: 5,
           background: 'rgba(255,255,255,0.05)',
           borderRadius: 2,
           overflow: 'hidden',

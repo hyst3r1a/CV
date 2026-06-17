@@ -7,12 +7,12 @@ import type { Project } from '../api/client'
 
 const STATION_Y = -16
 
-const CARD_W    = 255
-const CARD_H    = 195
-const CARD_GAP  = 14
+const CARD_W    = 360
+const CARD_H    = 250
+const CARD_GAP  = 24
 const STRIDE    = CARD_W + CARD_GAP
-const VIEWPORT_W = 576
-const VIEWPORT_H = 226
+const VIEWPORT_W = 900
+const VIEWPORT_H = 310
 
 const reducedMotion =
   typeof window !== 'undefined' &&
@@ -41,7 +41,7 @@ export default function ProjectHangar() {
         <div
           style={{
             fontFamily: 'JetBrains Mono, monospace',
-            fontSize: 8,
+            fontSize: 10,
             letterSpacing: 5,
             color: '#22d3ee',
             opacity: 0.45,
@@ -57,7 +57,6 @@ export default function ProjectHangar() {
       <Html
         center
         distanceFactor={13}
-        transform
         position={[0, 0, 0.06]}
         style={{
           width: VIEWPORT_W,
@@ -92,14 +91,17 @@ function Carousel({
   const isDragging = useRef(false)
   const startX     = useRef(0)
   const startTx    = useRef(0)
+  const currentTx  = useRef(0)
+  const wheelSnapTimer = useRef<number | null>(null)
 
   /* Centre the active card in the viewport */
   const centreOffset = (VIEWPORT_W - CARD_W) / 2
   const clamp = (v: number) =>
-    Math.max(-(projects.length - 1) * STRIDE, Math.min(0, v))
+    Math.max(-Math.max(projects.length - 1, 0) * STRIDE, Math.min(0, v))
 
   function applyTransform(tx: number, animate: boolean) {
     if (!trackRef.current) return
+    currentTx.current = tx
     trackRef.current.style.transition = animate
       ? 'transform 0.38s cubic-bezier(0.25,0.46,0.45,0.94)'
       : 'none'
@@ -108,15 +110,18 @@ function Carousel({
   }
 
   function snapTo(idx: number) {
-    const clamped = Math.max(0, Math.min(projects.length - 1, idx))
+    const clamped = Math.max(0, Math.min(Math.max(projects.length - 1, 0), idx))
     applyTransform(-clamped * STRIDE, true)
     onActiveChange(clamped)
   }
 
   function onPointerDown(e: React.PointerEvent) {
+    const target = e.target as HTMLElement
+    if (target.closest('[data-carousel-control="true"]')) return
+
     isDragging.current = true
     startX.current  = e.clientX
-    startTx.current = -activeIdx * STRIDE
+    startTx.current = currentTx.current
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
   }
 
@@ -137,8 +142,32 @@ function Carousel({
     }
   }
 
+  function onWheel(e: React.WheelEvent) {
+    const horizontalDelta = Math.abs(e.deltaX) > Math.abs(e.deltaY) * 0.65 ? e.deltaX : 0
+    if (!horizontalDelta) return
+
+    e.preventDefault()
+    e.stopPropagation()
+
+    const tx = clamp(currentTx.current - horizontalDelta)
+    const nearestIdx = Math.max(
+      0,
+      Math.min(Math.max(projects.length - 1, 0), Math.round(Math.abs(tx) / STRIDE)),
+    )
+
+    applyTransform(tx, false)
+    onActiveChange(nearestIdx)
+
+    if (wheelSnapTimer.current !== null) window.clearTimeout(wheelSnapTimer.current)
+    wheelSnapTimer.current = window.setTimeout(() => {
+      snapTo(nearestIdx)
+      wheelSnapTimer.current = null
+    }, 120)
+  }
+
   return (
     <div
+      data-no-page-drag="true"
       style={{
         width: '100%',
         height: '100%',
@@ -152,6 +181,7 @@ function Carousel({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
+      onWheel={onWheel}
     >
       {/* Card track */}
       <div
@@ -161,7 +191,7 @@ function Carousel({
           gap: CARD_GAP,
           transform: `translateX(${centreOffset}px)`,
           height: CARD_H,
-          marginTop: (VIEWPORT_H - CARD_H - 22) / 2,
+          marginTop: (VIEWPORT_H - CARD_H - 34) / 2,
           alignItems: 'stretch',
         }}
       >
@@ -174,27 +204,36 @@ function Carousel({
         ))}
       </div>
 
-      {/* Nav dots */}
+      {/* Nav controls */}
       <div
+        data-carousel-control="true"
+        onPointerDown={(e) => e.stopPropagation()}
         style={{
           position: 'absolute',
-          bottom: 7,
+          bottom: 8,
           left: 0,
           right: 0,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          gap: 7,
+          gap: 9,
+          zIndex: 4,
+          pointerEvents: 'auto',
         }}
       >
+        <NavButton label="Previous project" disabled={activeIdx === 0} onClick={() => snapTo(activeIdx - 1)}>
+          ‹
+        </NavButton>
         {projects.map((_, i) => (
           <div
             key={i}
+            data-carousel-control="true"
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); snapTo(i) }}
             style={{
-              width:  i === activeIdx ? 18 : 6,
-              height: 5,
-              borderRadius: 3,
+              width:  i === activeIdx ? 24 : 8,
+              height: 7,
+              borderRadius: 4,
               background: i === activeIdx ? '#22d3ee' : 'rgba(34,211,238,0.28)',
               cursor: 'pointer',
               transition: 'all 0.3s',
@@ -203,9 +242,58 @@ function Carousel({
             }}
           />
         ))}
+        <NavButton
+          label="Next project"
+          disabled={activeIdx >= projects.length - 1}
+          onClick={() => snapTo(activeIdx + 1)}
+        >
+          ›
+        </NavButton>
       </div>
 
     </div>
+  )
+}
+
+function NavButton({
+  children,
+  label,
+  disabled,
+  onClick,
+}: {
+  children: string
+  label: string
+  disabled: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      data-carousel-control="true"
+      type="button"
+      aria-label={label}
+      disabled={disabled}
+      onClick={(e) => {
+        e.stopPropagation()
+        if (!disabled) onClick()
+      }}
+      style={{
+        width: 26,
+        height: 22,
+        display: 'grid',
+        placeItems: 'center',
+        borderRadius: 4,
+        border: '1px solid rgba(34,211,238,0.28)',
+        background: disabled ? 'rgba(6,12,30,0.32)' : 'rgba(6,12,30,0.82)',
+        color: disabled ? 'rgba(148,163,184,0.35)' : '#67e8f9',
+        cursor: disabled ? 'default' : 'pointer',
+        fontSize: 19,
+        lineHeight: 1,
+        fontFamily: 'JetBrains Mono, monospace',
+        boxShadow: disabled ? 'none' : '0 0 10px rgba(34,211,238,0.16)',
+      }}
+    >
+      {children}
+    </button>
   )
 }
 
@@ -230,7 +318,7 @@ function CarouselCard({
         border: `1px solid ${accent}${isActive ? '38' : '18'}`,
         borderTop: `2px solid ${accent}`,
         borderRadius: 6,
-        padding: '10px 12px 8px',
+        padding: '15px 17px 12px',
         boxSizing: 'border-box',
         position: 'relative',
         overflow: 'hidden',
@@ -269,11 +357,11 @@ function CarouselCard({
 
       <div style={{ position: 'relative', zIndex: 1 }}>
         {/* Badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 7 }}>
           <div
             style={{
-              width: 5,
-              height: 5,
+              width: 7,
+              height: 7,
               borderRadius: '50%',
               background: accent,
               boxShadow: `0 0 6px ${accent}`,
@@ -282,7 +370,7 @@ function CarouselCard({
           />
           <span
             style={{
-              fontSize: 7.5,
+              fontSize: 9.5,
               fontWeight: 700,
               color: accent,
               letterSpacing: 2,
@@ -296,10 +384,10 @@ function CarouselCard({
         {/* Title */}
         <div
           style={{
-            fontSize: 11,
+            fontSize: 16,
             fontWeight: 700,
             color: '#f1f5f9',
-            marginBottom: 4,
+            marginBottom: 7,
             lineHeight: 1.25,
             display: '-webkit-box',
             WebkitLineClamp: 2,
@@ -314,10 +402,10 @@ function CarouselCard({
         {/* Description */}
         <div
           style={{
-            fontSize: 8,
+            fontSize: 11.5,
             color: '#94a3b8',
             lineHeight: 1.5,
-            marginBottom: 6,
+            marginBottom: 9,
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
@@ -328,7 +416,7 @@ function CarouselCard({
         </div>
 
         {/* Tech tags */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3, marginBottom: 6 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 9 }}>
           {project.techStack.slice(0, 4).map((t) => (
             <span
               key={t}
@@ -336,8 +424,8 @@ function CarouselCard({
                 background: `rgba(${project.featured ? '34,211,238' : '167,139,250'},0.07)`,
                 border: `1px solid ${accent}28`,
                 borderRadius: 2,
-                padding: '1px 5px',
-                fontSize: 7,
+                padding: '2px 7px',
+                fontSize: 9,
                 color: accent,
               }}
             >
@@ -350,9 +438,9 @@ function CarouselCard({
         <div
           style={{
             display: 'flex',
-            gap: 10,
+            gap: 14,
             borderTop: '1px solid rgba(34,211,238,0.07)',
-            paddingTop: 5,
+            paddingTop: 8,
           }}
         >
           {project.videoUrl && (
@@ -360,7 +448,7 @@ function CarouselCard({
               href={project.videoUrl}
               target="_blank"
               rel="noreferrer"
-              style={{ color: '#22d3ee', fontSize: 8, textDecoration: 'none' }}
+              style={{ color: '#22d3ee', fontSize: 11, textDecoration: 'none' }}
               onClick={(e) => e.stopPropagation()}
             >
               ▶ Demo
@@ -371,7 +459,7 @@ function CarouselCard({
               href={project.githubUrl}
               target="_blank"
               rel="noreferrer"
-              style={{ color: '#a78bfa', fontSize: 8, textDecoration: 'none' }}
+              style={{ color: '#a78bfa', fontSize: 11, textDecoration: 'none' }}
               onClick={(e) => e.stopPropagation()}
             >
               ⌥ GitHub

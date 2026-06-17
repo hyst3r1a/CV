@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html, Line } from '@react-three/drei'
 import * as THREE from 'three'
@@ -32,6 +32,7 @@ function randomPointInSphere(radius: number) {
 
 export default function TimelineElevator() {
   const { data: events = [] } = useTimeline()
+  const [expandedEventId, setExpandedEventId] = useState<number | null>(null)
 
   // Min 2.2 units per entry so cards never crowd; cap at 3.0 for short lists
   const spacing = Math.min(3.0, Math.max(2.2, 20.0 / Math.max(events.length, 1)))
@@ -85,6 +86,8 @@ export default function TimelineElevator() {
             position={new THREE.Vector3(0, y, 0)}
             cardOffset={side * 4.8}
             index={i}
+            expanded={expandedEventId === event.id}
+            onToggle={() => setExpandedEventId(expandedEventId === event.id ? null : event.id)}
           />
         )
       })}
@@ -97,11 +100,15 @@ function TimelineNode({
   position,
   cardOffset,
   index,
+  expanded,
+  onToggle,
 }: {
-  event: { year: number; title: string; company: string; description: string; type: string }
+  event: { id: number; year: number; title: string; company: string; description: string; type: string }
   position: THREE.Vector3
   cardOffset: number
   index: number
+  expanded: boolean
+  onToggle: () => void
 }) {
   const sphereRef = useRef<THREE.Mesh>(null)
   const cardGroupRef = useRef<THREE.Group>(null)
@@ -184,20 +191,28 @@ function TimelineNode({
         <Html
           center
           distanceFactor={13}
-          style={{ width: 230, pointerEvents: 'none' }}
+          style={{ width: expanded ? 310 : 230, pointerEvents: 'auto' }}
         >
           <div
+            data-no-page-drag="true"
+            onClick={(e) => {
+              e.stopPropagation()
+              onToggle()
+            }}
             style={{
               background: 'rgba(6,12,30,0.88)',
-              border: `1px solid ${color}22`,
+              border: `1px solid ${color}${expanded ? '55' : '22'}`,
               borderLeft: `3px solid ${color}`,
               borderRadius: 6,
-              padding: '14px 20px',
+              padding: expanded ? '16px 20px 18px' : '14px 20px',
               fontFamily: 'JetBrains Mono, monospace',
               userSelect: 'none',
               backdropFilter: 'blur(4px)',
               position: 'relative',
               overflow: 'hidden',
+              cursor: 'pointer',
+              boxShadow: expanded ? `0 0 24px ${color}18` : 'none',
+              transition: 'width 0.22s ease, padding 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease',
             }}
           >
             {/* Scanline */}
@@ -225,14 +240,15 @@ function TimelineNode({
               )}
               <div
                 style={{
-                  color: '#64748b',
+                  color: expanded ? '#94a3b8' : '#64748b',
                   fontSize: 13,
                   marginTop: 7,
                   lineHeight: 1.55,
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
+                  display: expanded ? 'block' : '-webkit-box',
+                  WebkitLineClamp: expanded ? 'unset' : 2,
                   WebkitBoxOrient: 'vertical',
                   overflow: 'hidden',
+                  transition: 'color 0.22s ease',
                 }}
               >
                 {event.description}

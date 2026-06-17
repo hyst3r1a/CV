@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { AnimatePresence } from 'framer-motion'
 import * as THREE from 'three'
@@ -14,20 +14,35 @@ const SCROLL_SPEED = 1 / (window.innerHeight * 3.5)
 export default function App() {
   const { setScrollProgress, recruiterMode } = useStore()
   const adminPage = window.location.pathname === '/admin' || window.location.hash === '#admin'
+  const dragScrollRef = useRef({
+    active: false,
+    lastY: 0,
+  })
+
+  const updateScroll = useCallback(
+    (deltaY: number, multiplier = 1) => {
+      setScrollProgress(
+        Math.min(
+          1,
+          Math.max(0, useStore.getState().scrollProgress + deltaY * SCROLL_SPEED * multiplier),
+        ),
+      )
+    },
+    [setScrollProgress],
+  )
 
   const handleWheel = useCallback(
     (e: WheelEvent) => {
       if (recruiterMode || adminPage) return
       e.preventDefault()
-      setScrollProgress(
-        Math.min(1, Math.max(0, useStore.getState().scrollProgress + e.deltaY * SCROLL_SPEED)),
-      )
+      updateScroll(e.deltaY)
     },
-    [adminPage, recruiterMode, setScrollProgress],
+    [adminPage, recruiterMode, updateScroll],
   )
 
   useEffect(() => {
     let lastY = 0
+    const sceneWindow = window as Window & { __orbitSceneDragLock?: boolean }
 
     const onTouchStart = (e: TouchEvent) => {
       lastY = e.touches[0].clientY
@@ -37,21 +52,57 @@ export default function App() {
       if (recruiterMode || adminPage) return
       const dy = lastY - e.touches[0].clientY
       lastY = e.touches[0].clientY
-      setScrollProgress(
-        Math.min(1, Math.max(0, useStore.getState().scrollProgress + dy * SCROLL_SPEED * 2)),
-      )
+      updateScroll(dy, 2)
+    }
+
+    const onPointerDown = (e: PointerEvent) => {
+      if (recruiterMode || adminPage || e.pointerType !== 'mouse' || e.button !== 0) return
+      if (sceneWindow.__orbitSceneDragLock) return
+
+      const target = e.target as HTMLElement | null
+      if (target?.closest('[data-no-page-drag="true"]')) return
+
+      dragScrollRef.current.active = true
+      dragScrollRef.current.lastY = e.clientY
+    }
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (!dragScrollRef.current.active) return
+      if (sceneWindow.__orbitSceneDragLock) {
+        dragScrollRef.current.active = false
+        return
+      }
+
+      const dy = dragScrollRef.current.lastY - e.clientY
+      dragScrollRef.current.lastY = e.clientY
+      if (Math.abs(dy) < 0.5) return
+
+      e.preventDefault()
+      updateScroll(dy, 2.3)
+    }
+
+    const onPointerUp = () => {
+      dragScrollRef.current.active = false
     }
 
     window.addEventListener('wheel', handleWheel, { passive: false })
     window.addEventListener('touchstart', onTouchStart, { passive: true })
     window.addEventListener('touchmove', onTouchMove, { passive: true })
+    window.addEventListener('pointerdown', onPointerDown, { passive: true })
+    window.addEventListener('pointermove', onPointerMove, { passive: false })
+    window.addEventListener('pointerup', onPointerUp, { passive: true })
+    window.addEventListener('pointercancel', onPointerUp, { passive: true })
 
     return () => {
       window.removeEventListener('wheel', handleWheel)
       window.removeEventListener('touchstart', onTouchStart)
       window.removeEventListener('touchmove', onTouchMove)
+      window.removeEventListener('pointerdown', onPointerDown)
+      window.removeEventListener('pointermove', onPointerMove)
+      window.removeEventListener('pointerup', onPointerUp)
+      window.removeEventListener('pointercancel', onPointerUp)
     }
-  }, [adminPage, handleWheel, recruiterMode, setScrollProgress])
+  }, [adminPage, handleWheel, recruiterMode, updateScroll])
 
   if (adminPage) return <AdminPage />
 

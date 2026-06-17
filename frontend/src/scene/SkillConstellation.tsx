@@ -1,6 +1,6 @@
-import { useRef, useMemo, useState } from 'react'
+import { useEffect, useRef, useMemo, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Html, Line } from '@react-three/drei'
+import { Html, Line, Torus } from '@react-three/drei'
 import * as THREE from 'three'
 import { useSkills } from '../api/hooks'
 import { useStore } from '../store/useStore'
@@ -14,6 +14,11 @@ export default function SkillConstellation() {
   const setSelectedSkill = useStore((s) => s.setSelectedSkill)
   const selectedSkill = useStore((s) => s.selectedSkill)
   const groupRef = useRef<THREE.Group>(null)
+  const dragRef = useRef({
+    active: false,
+    lastX: 0,
+    velocity: 0,
+  })
 
   const nodes = useMemo(() => {
     const total = Math.min(skills.length, 16)
@@ -44,14 +49,60 @@ export default function SkillConstellation() {
     return pairs
   }, [nodes])
 
+  useEffect(() => {
+    const move = (e: PointerEvent) => {
+      if (!dragRef.current.active || !groupRef.current) return
+
+      const dx = e.clientX - dragRef.current.lastX
+      dragRef.current.lastX = e.clientX
+      const nextVelocity = dx * 0.0038
+
+      groupRef.current.rotation.y += nextVelocity
+      dragRef.current.velocity = nextVelocity
+    }
+
+    const release = () => {
+      dragRef.current.active = false
+      ;(window as Window & { __orbitSceneDragLock?: boolean }).__orbitSceneDragLock = false
+    }
+
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', release)
+    window.addEventListener('pointercancel', release)
+
+    return () => {
+      release()
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', release)
+      window.removeEventListener('pointercancel', release)
+    }
+  }, [])
+
   useFrame((_, delta) => {
     if (groupRef.current) {
-      groupRef.current.rotation.y += delta * 0.04
+      groupRef.current.rotation.y += delta * 0.04 + dragRef.current.velocity
+      dragRef.current.velocity *= 0.9
     }
   })
 
+  function startSpinDrag(e: { clientX: number; stopPropagation: () => void }) {
+    e.stopPropagation()
+    dragRef.current.active = true
+    dragRef.current.lastX = e.clientX
+    dragRef.current.velocity = 0
+    ;(window as Window & { __orbitSceneDragLock?: boolean }).__orbitSceneDragLock = true
+  }
+
   return (
     <group ref={groupRef}>
+      <Torus
+        args={[4.8, 0.85, 8, 72]}
+        position={[0, STATION_Y, 0]}
+        rotation={[Math.PI / 2, 0, 0]}
+        onPointerDown={startSpinDrag}
+      >
+        <meshBasicMaterial transparent opacity={0.001} depthWrite={false} />
+      </Torus>
       {linePoints.map((pair, i) => (
         <Line
           key={i}
@@ -71,6 +122,7 @@ export default function SkillConstellation() {
           onSelect={() =>
             setSelectedSkill(selectedSkill === node.name ? null : node.name)
           }
+          onSpinDragStart={startSpinDrag}
         />
       ))}
     </group>
@@ -81,13 +133,16 @@ function SkillNode({
   node,
   selected,
   onSelect,
+  onSpinDragStart,
 }: {
   node: { name: string; proficiency: number; color: string; category: string; pos: THREE.Vector3 }
   selected: boolean
   onSelect: () => void
+  onSpinDragStart: (e: { clientX: number; stopPropagation: () => void }) => void
 }) {
   const meshRef = useRef<THREE.Mesh>(null)
   const [hovered, setHovered] = useState(false)
+  const dragStartXRef = useRef(0)
 
   useFrame((_, delta) => {
     if (meshRef.current) {
@@ -103,7 +158,14 @@ function SkillNode({
     <group position={node.pos}>
       <mesh
         ref={meshRef}
-        onClick={(e) => { e.stopPropagation(); onSelect() }}
+        onClick={(e) => {
+          e.stopPropagation()
+          if (Math.abs(e.clientX - dragStartXRef.current) < 5) onSelect()
+        }}
+        onPointerDown={(e) => {
+          dragStartXRef.current = e.clientX
+          onSpinDragStart(e)
+        }}
         onPointerEnter={() => setHovered(true)}
         onPointerLeave={() => setHovered(false)}
       >
