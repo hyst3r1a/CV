@@ -12,7 +12,7 @@ const CARD_H    = 340
 const CARD_GAP  = 32
 const STRIDE    = CARD_W + CARD_GAP
 const VIEWPORT_W = 1240
-const VIEWPORT_H = 420
+const VIEWPORT_H = 430
 
 const reducedMotion =
   typeof window !== 'undefined' &&
@@ -36,7 +36,7 @@ export default function ProjectHangar() {
     <group ref={panelRef} position={[0, STATION_Y, 0]}>
       {/* Station label */}
       <Html
-        position={[0, 2.5, 0]}
+        position={[0, 6.4, 0]}
         center
         distanceFactor={20}
         style={{ pointerEvents: 'none' }}
@@ -78,7 +78,7 @@ export default function ProjectHangar() {
           }}
         >
           <Carousel
-            projects={projects}
+          projects={projects}
             activeIdx={activeIdx}
             onActiveChange={setActiveIdx}
           />
@@ -101,6 +101,7 @@ function Carousel({
 }) {
   const trackRef  = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
+  const didDrag = useRef(false)
   const startX     = useRef(0)
   const startTx    = useRef(0)
   const currentTx  = useRef(0)
@@ -133,6 +134,7 @@ function Carousel({
     if (target.closest('[data-carousel-control="true"]')) return
 
     isDragging.current = true
+    didDrag.current = false
     sceneWindow.__orbitSceneDragLock = true
     startX.current  = e.clientX
     startTx.current = currentTx.current
@@ -143,6 +145,7 @@ function Carousel({
     if (!isDragging.current) return
     e.stopPropagation()
     e.preventDefault()
+    if (Math.abs(e.clientX - startX.current) > 6) didDrag.current = true
     const tx = clamp(startTx.current + (e.clientX - startX.current))
     applyTransform(tx, false)
   }
@@ -154,8 +157,7 @@ function Carousel({
     sceneWindow.__orbitSceneDragLock = false
     const delta = e.clientX - startX.current
     const nearestIdx = Math.round(Math.abs(currentTx.current) / STRIDE)
-    const flickIdx = delta < -70 ? nearestIdx + 1 : delta > 70 ? nearestIdx - 1 : nearestIdx
-    snapTo(flickIdx)
+    snapTo(nearestIdx)
     if ((e.currentTarget as HTMLElement).hasPointerCapture(e.pointerId)) {
       ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
     }
@@ -221,7 +223,7 @@ function Carousel({
           gap: CARD_GAP,
           transform: `translateX(${centreOffset}px)`,
           height: CARD_H,
-          marginTop: (VIEWPORT_H - CARD_H - 48) / 2,
+          marginTop: (VIEWPORT_H - CARD_H - 54) / 2,
           alignItems: 'stretch',
         }}
       >
@@ -230,6 +232,7 @@ function Carousel({
             key={project.id}
             project={project}
             isActive={i === activeIdx}
+            index={i}
           />
         ))}
       </div>
@@ -332,14 +335,17 @@ function NavButton({
 function CarouselCard({
   project,
   isActive,
+  index,
 }: {
   project: Project
   isActive: boolean
+  index: number
 }) {
   const accent = project.featured ? '#22d3ee' : '#a78bfa'
 
   return (
     <div
+      data-project-card-index={index}
       style={{
         width: CARD_W,
         height: CARD_H,
@@ -348,10 +354,11 @@ function CarouselCard({
         border: `1px solid ${accent}${isActive ? '38' : '18'}`,
         borderTop: `2px solid ${accent}`,
         borderRadius: 6,
-        padding: '22px 25px 18px',
+        padding: '18px 25px 16px',
         boxSizing: 'border-box',
         position: 'relative',
         overflow: 'hidden',
+        cursor: 'pointer',
         transform: `scale(${isActive ? 1 : 0.91})`,
         transition: 'transform 0.32s cubic-bezier(0.25,0.46,0.45,0.94), border-color 0.32s',
         backdropFilter: 'blur(4px)',
@@ -385,9 +392,17 @@ function CarouselCard({
         />
       )}
 
-      <div style={{ position: 'relative', zIndex: 1 }}>
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         {/* Badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 9 }}>
           <div
             style={{
               width: 8,
@@ -414,11 +429,11 @@ function CarouselCard({
         {/* Title */}
         <div
           style={{
-            fontSize: 22,
+            fontSize: 21,
             fontWeight: 700,
             color: '#f1f5f9',
-            marginBottom: 10,
-            lineHeight: 1.25,
+            marginBottom: 9,
+            lineHeight: 1.2,
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
@@ -432,22 +447,23 @@ function CarouselCard({
         {/* Description */}
         <div
           style={{
-            fontSize: 15,
+            fontSize: 14,
             color: '#94a3b8',
-            lineHeight: 1.5,
-            marginBottom: 11,
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
+            lineHeight: 1.42,
+            marginBottom: 14,
+            display: 'block',
             overflow: 'hidden',
+            flex: '1 1 auto',
+            minHeight: 0,
           }}
         >
           {project.description}
         </div>
 
+        <div style={{ marginTop: 'auto', paddingTop: 8 }}>
         {/* Tech tags */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 12 }}>
-          {project.techStack.slice(0, 4).map((t) => (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: project.videoUrl || project.githubUrl ? 10 : 0 }}>
+          {project.techStack.slice(0, 5).map((t) => (
             <span
               key={t}
               style={{
@@ -471,6 +487,8 @@ function CarouselCard({
             gap: 18,
             borderTop: '1px solid rgba(34,211,238,0.07)',
             paddingTop: 10,
+            minHeight: 28,
+            visibility: project.videoUrl || project.githubUrl ? 'visible' : 'hidden',
           }}
         >
           {project.videoUrl && (
@@ -495,6 +513,7 @@ function CarouselCard({
               ⌥ GitHub
             </a>
           )}
+        </div>
         </div>
       </div>
     </div>
