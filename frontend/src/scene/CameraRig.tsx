@@ -29,11 +29,20 @@ const sway        = new THREE.Vector3()
 const swayedPos   = new THREE.Vector3()
 
 export default function CameraRig() {
-  const { camera } = useThree()
+  const { camera, size } = useThree()
   const scrollProgress = useStore((s) => s.scrollProgress)
   const initialized = useRef(false)
 
   useFrame((state) => {
+    const isPortrait = size.width < size.height
+    const perspective = camera as THREE.PerspectiveCamera
+    const targetFov = isPortrait ? 70 : 58
+
+    if (Math.abs(perspective.fov - targetFov) > 0.01) {
+      perspective.fov = THREE.MathUtils.lerp(perspective.fov, targetFov, 0.08)
+      perspective.updateProjectionMatrix()
+    }
+
     const t    = scrollProgress * (stations.length - 1)
     const from = Math.floor(t)
     const to   = Math.min(Math.ceil(t), stations.length - 1)
@@ -59,6 +68,10 @@ export default function CameraRig() {
       swayedPos.copy(targetPos).add(sway)
     } else {
       swayedPos.copy(targetPos)
+    }
+
+    if (isPortrait) {
+      swayedPos.z += 4
     }
 
     camera.position.lerp(swayedPos, 0.055)

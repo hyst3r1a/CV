@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { useProjects } from '../api/hooks'
@@ -7,12 +7,12 @@ import type { Project } from '../api/client'
 
 const STATION_Y = -16
 
-const CARD_W    = 360
-const CARD_H    = 250
-const CARD_GAP  = 24
+const CARD_W    = 430
+const CARD_H    = 300
+const CARD_GAP  = 28
 const STRIDE    = CARD_W + CARD_GAP
-const VIEWPORT_W = 900
-const VIEWPORT_H = 310
+const VIEWPORT_W = 1080
+const VIEWPORT_H = 370
 
 const reducedMotion =
   typeof window !== 'undefined' &&
@@ -20,8 +20,11 @@ const reducedMotion =
 
 export default function ProjectHangar() {
   const { data: projects = [] } = useProjects()
+  const { size } = useThree()
   const panelRef = useRef<THREE.Group>(null)
   const [activeIdx, setActiveIdx] = useState(0)
+  const isPortrait = size.width < size.height
+  const panelScale = isPortrait ? Math.min(0.72, Math.max(0.42, (size.width - 28) / VIEWPORT_W)) : 1
 
   useFrame((state) => {
     if (!panelRef.current || reducedMotion) return
@@ -66,11 +69,20 @@ export default function ProjectHangar() {
           userSelect: 'none',
         }}
       >
-        <Carousel
-          projects={projects}
-          activeIdx={activeIdx}
-          onActiveChange={setActiveIdx}
-        />
+        <div
+          style={{
+            width: VIEWPORT_W,
+            height: VIEWPORT_H,
+            transform: `scale(${panelScale})`,
+            transformOrigin: 'center center',
+          }}
+        >
+          <Carousel
+            projects={projects}
+            activeIdx={activeIdx}
+            onActiveChange={setActiveIdx}
+          />
+        </div>
       </Html>
     </group>
   )
@@ -191,7 +203,7 @@ function Carousel({
           gap: CARD_GAP,
           transform: `translateX(${centreOffset}px)`,
           height: CARD_H,
-          marginTop: (VIEWPORT_H - CARD_H - 34) / 2,
+          marginTop: (VIEWPORT_H - CARD_H - 42) / 2,
           alignItems: 'stretch',
         }}
       >
@@ -210,7 +222,7 @@ function Carousel({
         onPointerDown={(e) => e.stopPropagation()}
         style={{
           position: 'absolute',
-          bottom: 8,
+          bottom: 10,
           left: 0,
           right: 0,
           display: 'flex',
@@ -231,8 +243,8 @@ function Carousel({
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); snapTo(i) }}
             style={{
-              width:  i === activeIdx ? 24 : 8,
-              height: 7,
+              width:  i === activeIdx ? 30 : 10,
+              height: 8,
               borderRadius: 4,
               background: i === activeIdx ? '#22d3ee' : 'rgba(34,211,238,0.28)',
               cursor: 'pointer',
@@ -277,8 +289,8 @@ function NavButton({
         if (!disabled) onClick()
       }}
       style={{
-        width: 26,
-        height: 22,
+        width: 32,
+        height: 26,
         display: 'grid',
         placeItems: 'center',
         borderRadius: 4,
@@ -286,7 +298,7 @@ function NavButton({
         background: disabled ? 'rgba(6,12,30,0.32)' : 'rgba(6,12,30,0.82)',
         color: disabled ? 'rgba(148,163,184,0.35)' : '#67e8f9',
         cursor: disabled ? 'default' : 'pointer',
-        fontSize: 19,
+        fontSize: 22,
         lineHeight: 1,
         fontFamily: 'JetBrains Mono, monospace',
         boxShadow: disabled ? 'none' : '0 0 10px rgba(34,211,238,0.16)',
@@ -318,7 +330,7 @@ function CarouselCard({
         border: `1px solid ${accent}${isActive ? '38' : '18'}`,
         borderTop: `2px solid ${accent}`,
         borderRadius: 6,
-        padding: '15px 17px 12px',
+        padding: '19px 22px 15px',
         boxSizing: 'border-box',
         position: 'relative',
         overflow: 'hidden',
@@ -357,11 +369,11 @@ function CarouselCard({
 
       <div style={{ position: 'relative', zIndex: 1 }}>
         {/* Badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 7 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9 }}>
           <div
             style={{
-              width: 7,
-              height: 7,
+              width: 8,
+              height: 8,
               borderRadius: '50%',
               background: accent,
               boxShadow: `0 0 6px ${accent}`,
@@ -370,7 +382,7 @@ function CarouselCard({
           />
           <span
             style={{
-              fontSize: 9.5,
+              fontSize: 11,
               fontWeight: 700,
               color: accent,
               letterSpacing: 2,
@@ -384,10 +396,10 @@ function CarouselCard({
         {/* Title */}
         <div
           style={{
-            fontSize: 16,
+            fontSize: 19,
             fontWeight: 700,
             color: '#f1f5f9',
-            marginBottom: 7,
+            marginBottom: 9,
             lineHeight: 1.25,
             display: '-webkit-box',
             WebkitLineClamp: 2,
@@ -402,10 +414,10 @@ function CarouselCard({
         {/* Description */}
         <div
           style={{
-            fontSize: 11.5,
+            fontSize: 13.5,
             color: '#94a3b8',
             lineHeight: 1.5,
-            marginBottom: 9,
+            marginBottom: 11,
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
@@ -416,7 +428,7 @@ function CarouselCard({
         </div>
 
         {/* Tech tags */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 9 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 11 }}>
           {project.techStack.slice(0, 4).map((t) => (
             <span
               key={t}
@@ -424,8 +436,8 @@ function CarouselCard({
                 background: `rgba(${project.featured ? '34,211,238' : '167,139,250'},0.07)`,
                 border: `1px solid ${accent}28`,
                 borderRadius: 2,
-                padding: '2px 7px',
-                fontSize: 9,
+                padding: '3px 8px',
+                fontSize: 10.5,
                 color: accent,
               }}
             >
@@ -438,9 +450,9 @@ function CarouselCard({
         <div
           style={{
             display: 'flex',
-            gap: 14,
+            gap: 18,
             borderTop: '1px solid rgba(34,211,238,0.07)',
-            paddingTop: 8,
+            paddingTop: 10,
           }}
         >
           {project.videoUrl && (
@@ -448,7 +460,7 @@ function CarouselCard({
               href={project.videoUrl}
               target="_blank"
               rel="noreferrer"
-              style={{ color: '#22d3ee', fontSize: 11, textDecoration: 'none' }}
+              style={{ color: '#22d3ee', fontSize: 13, textDecoration: 'none' }}
               onClick={(e) => e.stopPropagation()}
             >
               ▶ Demo
@@ -459,7 +471,7 @@ function CarouselCard({
               href={project.githubUrl}
               target="_blank"
               rel="noreferrer"
-              style={{ color: '#a78bfa', fontSize: 11, textDecoration: 'none' }}
+              style={{ color: '#a78bfa', fontSize: 13, textDecoration: 'none' }}
               onClick={(e) => e.stopPropagation()}
             >
               ⌥ GitHub
