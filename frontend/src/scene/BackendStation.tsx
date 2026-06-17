@@ -42,8 +42,8 @@ export default function BackendStation() {
 
   return (
     <group ref={panelRef} position={[0, STATION_Y, 0]}>
-      {/* Main glass panel */}
-      <RoundedBox args={[7.6, 5.4, 0.09]} radius={0.1} smoothness={4}>
+      {/* Main glass panel — tall enough to hold all content without clipping */}
+      <RoundedBox args={[7.6, 7.2, 0.09]} radius={0.1} smoothness={4}>
         <meshPhysicalMaterial
           color="#030810"
           transparent
@@ -55,19 +55,25 @@ export default function BackendStation() {
       </RoundedBox>
 
       {/* Top edge — reactor status strip */}
-      <mesh position={[0, 2.62, 0.06]}>
+      <mesh position={[0, 3.52, 0.06]}>
         <planeGeometry args={[7.5, 0.06]} />
         <meshBasicMaterial color="#22d3ee" transparent opacity={0.85} />
       </mesh>
 
       {/* Side accent lines */}
       <mesh position={[-3.72, 0, 0.06]}>
-        <planeGeometry args={[0.03, 5.3]} />
+        <planeGeometry args={[0.03, 7.1]} />
         <meshBasicMaterial color="#22d3ee" transparent opacity={0.3} />
       </mesh>
       <mesh position={[3.72, 0, 0.06]}>
-        <planeGeometry args={[0.03, 5.3]} />
+        <planeGeometry args={[0.03, 7.1]} />
         <meshBasicMaterial color="#22d3ee" transparent opacity={0.3} />
+      </mesh>
+
+      {/* Bottom fade — soft edge so content doesn't hard-clip */}
+      <mesh position={[0, -3.3, 0.07]}>
+        <planeGeometry args={[7.4, 1.0]} />
+        <meshBasicMaterial color="#030810" transparent opacity={0.9} />
       </mesh>
 
       <Html center distanceFactor={11} transform style={{ width: 580, userSelect: 'none' }}>

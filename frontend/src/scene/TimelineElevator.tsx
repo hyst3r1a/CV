@@ -19,8 +19,11 @@ const TYPE_COLOR: Record<string, string> = {
 export default function TimelineElevator() {
   const { data: events = [] } = useTimeline()
 
+  // Shrink spacing as the list grows so the spine never reaches the reactor at Y=-32
+  const spacing = Math.max(1.2, 9.0 / Math.max(events.length, 1))
+
   const linePoints: THREE.Vector3[] = events.map((_, i) => {
-    const y = STATION_Y + (i - (events.length - 1) / 2) * 1.9
+    const y = STATION_Y + (i - (events.length - 1) / 2) * spacing
     return new THREE.Vector3(0, y, 0)
   })
 
@@ -28,7 +31,7 @@ export default function TimelineElevator() {
     <group>
       {/* Station label */}
       <Html
-        position={[0, STATION_Y + (events.length / 2) * 1.9 + 1.0, 0]}
+        position={[0, STATION_Y + (events.length / 2) * spacing + 1.0, 0]}
         center
         distanceFactor={13}
         style={{ pointerEvents: 'none' }}
@@ -59,7 +62,7 @@ export default function TimelineElevator() {
       )}
 
       {events.map((event, i) => {
-        const y    = STATION_Y + (i - (events.length - 1) / 2) * 1.9
+        const y    = STATION_Y + (i - (events.length - 1) / 2) * spacing
         const side = i % 2 === 0 ? 1 : -1
         return (
           <TimelineNode
