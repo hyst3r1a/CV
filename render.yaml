@@ -1,13 +1,10 @@
 services:
-  # --- Spring Boot backend ---
+  # --- Spring Boot backend (Docker) ---
   - type: web
     name: orbital-cv-backend
-    runtime: java
-    region: oregon
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
     plan: free
-    rootDir: backend
-    buildCommand: chmod +x mvnw && ./mvnw clean package -DskipTests
-    startCommand: java -jar target/orbitcv-1.0.0.jar
     healthCheckPath: /api/health
     envVars:
       - key: SPRING_PROFILES_ACTIVE
@@ -15,16 +12,13 @@ services:
       - key: FRONTEND_ORIGIN
         fromService:
           name: orbital-cv-frontend
-          type: web
+          type: static
           property: host
           format: https://{}
 
-  # --- React + Vite frontend ---
-  - type: web
+  # --- React + Vite frontend (Static Site) ---
+  - type: static
     name: orbital-cv-frontend
-    runtime: static
-    region: oregon
-    plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
