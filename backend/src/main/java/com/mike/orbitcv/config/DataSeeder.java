@@ -2,6 +2,8 @@ package com.mike.orbitcv.config;
 
 import com.mike.orbitcv.entity.*;
 import com.mike.orbitcv.repository.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -11,6 +13,8 @@ import java.util.List;
 @Component
 @ConditionalOnProperty(name = "app.seed.enabled", havingValue = "true", matchIfMissing = true)
 public class DataSeeder implements CommandLineRunner {
+
+    private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
 
     private final ProjectRepository projectRepo;
     private final SkillRepository skillRepo;
@@ -27,14 +31,20 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        log.info("DataSeeder starting");
         seedSkills();
         seedProjects();
         seedTimeline();
         seedVideos();
+        log.info("DataSeeder complete");
     }
 
     private void seedSkills() {
-        if (skillRepo.count() > 0) return;
+        long existing = skillRepo.count();
+        if (existing > 0) {
+            log.info("Skipping skill seed: {} rows already exist", existing);
+            return;
+        }
         List<SkillEntity> skills = List.of(
             skill("NVIDIA Omniverse / USD", "3D / XR", 92, "#76b900"),
             skill("XR Development", "3D / XR", 90, "#7c3aed"),
@@ -60,10 +70,15 @@ public class DataSeeder implements CommandLineRunner {
             skill("VR Porting", "3D / XR", 78, "#a855f7")
         );
         skillRepo.saveAll(skills);
+        log.info("Seeded {} skills", skills.size());
     }
 
     private void seedProjects() {
-        if (projectRepo.count() > 0) return;
+        long existing = projectRepo.count();
+        if (existing > 0) {
+            log.info("Skipping project seed: {} rows already exist", existing);
+            return;
+        }
         List<ProjectEntity> projects = List.of(
             project("Orbital CV Console", "This interactive 3D CV — a scroll-driven R3F scene backed by a live Spring Boot microservice. Demonstrates full-stack architecture, Hibernate persistence, REST APIs, and WebGL visuals deployed on Render.",
                     "React,Three.js,Spring Boot,Hibernate,SQLite,Tailwind,Render", null, null, "https://github.com/mikle-higaran/orbital-cv", true, 1),
@@ -79,10 +94,15 @@ public class DataSeeder implements CommandLineRunner {
                     "React,FastAPI,Python,USD,Docker", null, null, "https://github.com/mikle-higaran/usd-manager", false, 6)
         );
         projectRepo.saveAll(projects);
+        log.info("Seeded {} projects", projects.size());
     }
 
     private void seedTimeline() {
-        if (timelineRepo.count() > 0) return;
+        long existing = timelineRepo.count();
+        if (existing > 0) {
+            log.info("Skipping timeline seed: {} rows already exist", existing);
+            return;
+        }
         List<TimelineEventEntity> events = List.of(
             event(2019, "BSc Computer Science", "University", "Graduated with first-class honours. Thesis: GPU-accelerated physics simulation for real-time XR.", "ACHIEVEMENT", 1),
             event(2020, "Embedded Systems Intern", "Bosch", "Driver development for CAN-bus IoT sensors on Linux. Wrote kernel modules and cross-compiled toolchains.", "JOB", 2),
@@ -95,16 +115,22 @@ public class DataSeeder implements CommandLineRunner {
             event(2026, "Open to Opportunities", "", "Seeking a senior role in XR, Omniverse, or full-stack engineering where both 3D and backend depth matter.", "ACHIEVEMENT", 9)
         );
         timelineRepo.saveAll(events);
+        log.info("Seeded {} timeline events", events.size());
     }
 
     private void seedVideos() {
-        if (videoRepo.count() > 0) return;
+        long existing = videoRepo.count();
+        if (existing > 0) {
+            log.info("Skipping video seed: {} rows already exist", existing);
+            return;
+        }
         List<VideoEntity> videos = List.of(
             video("XR Product Configurator Demo", "Live demo: WebXR real-time material configurator with Spring Boot persistence.", "https://www.youtube.com/embed/dQw4w9WgXcQ", null, 2L),
             video("Omniverse Pipeline Walkthrough", "Python-driven USD stage composition and automated render farm submission.", "https://www.youtube.com/embed/dQw4w9WgXcQ", null, 3L),
             video("VR Training Platform", "Multi-user WebXR safety training — Meta Quest + browser.", "https://www.youtube.com/embed/dQw4w9WgXcQ", null, 5L)
         );
         videoRepo.saveAll(videos);
+        log.info("Seeded {} videos", videos.size());
     }
 
     private SkillEntity skill(String name, String cat, int prof, String color) {

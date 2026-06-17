@@ -214,7 +214,7 @@ export default function RecruiterMode() {
           {submitted ? (
             <div className="border border-cyan-400/20 rounded p-4 text-center">
               <div className="text-cyan-400 text-sm font-semibold mb-1">Message received ✓</div>
-              <div className="text-slate-500 text-xs">Persisted via Hibernate → SQLite — try POST /api/contact-intent to verify</div>
+              <div className="text-slate-500 text-xs">I'll get back to you as soon as I can!</div>
             </div>
           ) : (
             <form onSubmit={handleContact} className="space-y-3">
@@ -256,7 +256,7 @@ export default function RecruiterMode() {
                   opacity: submitting ? 0.7 : 1,
                 }}
               >
-                {submitting ? 'SENDING…' : 'SEND → POST /api/contact-intent → Hibernate → SQLite'}
+                {submitting ? 'SENDING…' : 'SEND'}
               </button>
             </form>
           )}

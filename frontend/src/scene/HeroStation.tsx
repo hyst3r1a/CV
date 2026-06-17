@@ -145,7 +145,7 @@ export default function HeroStation() {
               letterSpacing: 1,
             }}
           >
-            Mikle Higaran
+            Mykhailo Gorshenin
           </div>
           <div
             style={{
