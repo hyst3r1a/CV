@@ -2,6 +2,7 @@ services:
   # --- Spring Boot backend (Docker) ---
   - type: web
     name: orbital-cv-backend
+    runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     plan: free
@@ -9,16 +10,15 @@ services:
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
+      # For now, set this explicitly after frontend exists,
+      # or allow a known onrender.com/custom domain in Spring CORS.
       - key: FRONTEND_ORIGIN
-        fromService:
-          name: orbital-cv-frontend
-          type: static
-          property: host
-          format: https://{}
+        value: https://orbital-cv-frontend.onrender.com
 
   # --- React + Vite frontend (Static Site) ---
-  - type: static
+  - type: web
     name: orbital-cv-frontend
+    runtime: static
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
@@ -31,8 +31,4 @@ services:
         value: public, max-age=31536000, immutable
     envVars:
       - key: VITE_API_BASE_URL
-        fromService:
-          name: orbital-cv-backend
-          type: web
-          property: host
-          format: https://{}
+        value: https://orbital-cv-backend.onrender.com
