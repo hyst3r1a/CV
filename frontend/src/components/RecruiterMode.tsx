@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useStore } from '../store/useStore'
-import { useSkills, useProjects, useTimeline } from '../api/hooks'
+import { useSkills, useProjects, useTimeline, useVideos } from '../api/hooks'
 import { api } from '../api/client'
 
 const CATEGORY_ORDER = ['3D / XR', 'Frontend', 'Backend', 'Systems', 'DevOps']
@@ -11,6 +11,7 @@ export default function RecruiterMode() {
   const { data: skills = [] } = useSkills()
   const { data: projects = [] } = useProjects()
   const { data: timeline = [] } = useTimeline()
+  const { data: videos = [] } = useVideos()
   const [form, setForm] = useState({ name: '', email: '', message: '' })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -177,6 +178,35 @@ export default function RecruiterMode() {
             ))}
           </div>
         </section>
+
+        {/* Media Showcase */}
+        {videos.length > 0 && (
+          <section className="mb-10">
+            <h2 className="text-xs text-cyan-400 tracking-widest mb-4 uppercase">Media Showcase</h2>
+            <div className="space-y-3">
+              {videos.map((v) => {
+                const watchUrl = v.embedUrl.replace('/embed/', '/watch?v=')
+                return (
+                  <a
+                    key={v.id}
+                    href={watchUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-start gap-3 p-3 rounded border border-slate-800 hover:border-cyan-400/40 transition-colors group"
+                    style={{ background: 'rgba(34,211,238,0.02)' }}
+                  >
+                    <span className="text-cyan-400 text-sm mt-0.5 group-hover:scale-110 transition-transform">▶</span>
+                    <div className="min-w-0">
+                      <div className="text-white text-xs font-semibold truncate">{v.title}</div>
+                      <div className="text-slate-500 text-xs mt-0.5 leading-relaxed">{v.description}</div>
+                    </div>
+                    <span className="text-slate-700 text-xs ml-auto shrink-0 group-hover:text-cyan-400 transition-colors">↗</span>
+                  </a>
+                )
+              })}
+            </div>
+          </section>
+        )}
 
         {/* Contact */}
         <section className="mb-10">

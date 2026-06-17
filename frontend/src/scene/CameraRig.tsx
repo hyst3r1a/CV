@@ -4,11 +4,11 @@ import * as THREE from 'three'
 import { useStore } from '../store/useStore'
 
 const stations = [
-  { position: new THREE.Vector3(0, 0, 12),   lookAt: new THREE.Vector3(0, 0, 0)   },
-  { position: new THREE.Vector3(0, -8, 10),  lookAt: new THREE.Vector3(0, -8, 0)  },
-  { position: new THREE.Vector3(8, -16, 10), lookAt: new THREE.Vector3(0, -16, 0) },
-  { position: new THREE.Vector3(-8, -24, 10),lookAt: new THREE.Vector3(0, -24, 0) },
-  { position: new THREE.Vector3(0, -32, 12), lookAt: new THREE.Vector3(0, -32, 0) },
+  { position: new THREE.Vector3(0,   0,  12), lookAt: new THREE.Vector3(0,   0,  0) },
+  { position: new THREE.Vector3(4,  -8,  12), lookAt: new THREE.Vector3(0,  -8,  0) },
+  { position: new THREE.Vector3(0, -16,  16), lookAt: new THREE.Vector3(0, -16,  0) },
+  { position: new THREE.Vector3(-6,-30,  12), lookAt: new THREE.Vector3(0, -30,  0) },
+  { position: new THREE.Vector3(0, -50,  12), lookAt: new THREE.Vector3(0, -50,  0) },
 ]
 
 /** Cubic smoothstep — eliminates linear ramp feel between stations */

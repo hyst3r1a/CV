@@ -19,16 +19,23 @@ export default function OrbitalScene() {
 
       {/* Lighting — each station gets a signature hue */}
       <ambientLight intensity={0.25} />
+      {/* Hero (Y=0) */}
       <pointLight position={[0,   0,  8]} intensity={2.0} color="#22d3ee" distance={30} />
       <pointLight position={[5,  -4,  6]} intensity={0.8} color="#6366f1" distance={25} />
+      {/* SkillConstellation (Y=−8) */}
       <pointLight position={[0,  -8,  8]} intensity={1.8} color="#7c3aed" distance={28} />
       <pointLight position={[-4,-12,  6]} intensity={0.6} color="#22d3ee" distance={20} />
+      {/* ProjectHangar (Y=−16) */}
       <pointLight position={[8, -16,  8]} intensity={1.8} color="#6366f1" distance={28} />
       <pointLight position={[-8,-16,  4]} intensity={0.7} color="#a78bfa" distance={20} />
-      <pointLight position={[-8,-24,  8]} intensity={1.8} color="#22d3ee" distance={28} />
-      <pointLight position={[6, -28,  6]} intensity={0.6} color="#f59e0b" distance={20} />
-      <pointLight position={[0, -32,  8]} intensity={2.2} color="#a78bfa" distance={32} />
-      <pointLight position={[-5,-36,  5]} intensity={0.8} color="#22d3ee" distance={22} />
+      {/* TimelineElevator (Y=−30) */}
+      <pointLight position={[-8,-26,  8]} intensity={1.8} color="#22d3ee" distance={30} />
+      <pointLight position={[6, -30,  6]} intensity={0.8} color="#f59e0b" distance={24} />
+      <pointLight position={[-6,-34,  5]} intensity={0.6} color="#22d3ee" distance={22} />
+      {/* BackendStation (Y=−50) */}
+      <pointLight position={[0, -44,  8]} intensity={1.4} color="#a78bfa" distance={28} />
+      <pointLight position={[0, -50,  8]} intensity={2.2} color="#a78bfa" distance={34} />
+      <pointLight position={[-5,-54,  5]} intensity={0.8} color="#22d3ee" distance={22} />
 
       <CameraRig />
 

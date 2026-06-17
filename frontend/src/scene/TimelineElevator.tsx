@@ -1,10 +1,10 @@
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html, Line } from '@react-three/drei'
 import * as THREE from 'three'
 import { useTimeline } from '../api/hooks'
 
-const STATION_Y = -24
+const STATION_Y = -30
 
 const reducedMotion =
   typeof window !== 'undefined' &&
@@ -16,11 +16,25 @@ const TYPE_COLOR: Record<string, string> = {
   AWARD:       '#a78bfa',
 }
 
+const CARD_FLOAT_RADIUS = 0.36
+const CARD_EDGE_RATIO = 0.12
+
+function randomPointInSphere(radius: number) {
+  const v = new THREE.Vector3(
+    Math.random() * 2 - 1,
+    Math.random() * 2 - 1,
+    Math.random() * 2 - 1,
+  )
+
+  if (v.lengthSq() === 0) return v
+  return v.normalize().multiplyScalar(Math.random() * radius)
+}
+
 export default function TimelineElevator() {
   const { data: events = [] } = useTimeline()
 
-  // Shrink spacing as the list grows so the spine never reaches the reactor at Y=-32
-  const spacing = Math.max(1.2, 9.0 / Math.max(events.length, 1))
+  // Min 2.2 units per entry so cards never crowd; cap at 3.0 for short lists
+  const spacing = Math.min(3.0, Math.max(2.2, 20.0 / Math.max(events.length, 1)))
 
   const linePoints: THREE.Vector3[] = events.map((_, i) => {
     const y = STATION_Y + (i - (events.length - 1) / 2) * spacing
@@ -90,17 +104,55 @@ function TimelineNode({
   index: number
 }) {
   const sphereRef = useRef<THREE.Mesh>(null)
+  const cardGroupRef = useRef<THREE.Group>(null)
+  const connectorRef = useRef<THREE.Line>(null)
+  const cardPositionRef = useRef(new THREE.Vector3(cardOffset, 0, 0))
+  const targetPositionRef = useRef(new THREE.Vector3(cardOffset, 0, 0))
+  const nextTargetAtRef = useRef(0)
   const color     = TYPE_COLOR[event.type] ?? '#22d3ee'
+  const connectorGeometry = useMemo(() => {
+    const geometry = new THREE.BufferGeometry()
+    geometry.setAttribute(
+      'position',
+      new THREE.Float32BufferAttribute([0, 0, 0, cardOffset * 0.88, 0, 0], 3),
+    )
+    return geometry
+  }, [cardOffset])
 
-  useFrame((state) => {
-    if (!sphereRef.current || reducedMotion) return
+  useFrame((state, delta) => {
+    if (reducedMotion) return
     const et = state.clock.elapsedTime
-    sphereRef.current.rotation.y = et * 0.9
-    const mat = sphereRef.current.material as THREE.MeshStandardMaterial
-    mat.emissiveIntensity = 1.2 + Math.sin(et * 2 + index) * 0.6
-  })
 
-  const lineEnd = new THREE.Vector3(cardOffset * 0.88, position.y, 0)
+    if (sphereRef.current) {
+      sphereRef.current.rotation.y = et * 0.9
+      const mat = sphereRef.current.material as THREE.MeshStandardMaterial
+      mat.emissiveIntensity = 1.2 + Math.sin(et * 2 + index) * 0.6
+    }
+
+    if (!cardGroupRef.current || !connectorRef.current) return
+
+    if (
+      et >= nextTargetAtRef.current ||
+      cardPositionRef.current.distanceToSquared(targetPositionRef.current) < 0.002
+    ) {
+      targetPositionRef.current
+        .set(cardOffset, 0, 0)
+        .add(randomPointInSphere(CARD_FLOAT_RADIUS))
+      nextTargetAtRef.current = et + 1.6 + Math.random() * 1.4
+    }
+
+    cardPositionRef.current.lerp(targetPositionRef.current, Math.min(delta * 0.75, 1))
+    cardGroupRef.current.position.copy(cardPositionRef.current)
+
+    const side = Math.sign(cardOffset) || 1
+    const lineEnd = cardPositionRef.current.clone()
+    lineEnd.x -= side * Math.abs(cardOffset) * CARD_EDGE_RATIO
+
+    const position = connectorRef.current.geometry.attributes.position as THREE.BufferAttribute
+    position.setXYZ(1, lineEnd.x, lineEnd.y, lineEnd.z)
+    position.needsUpdate = true
+    connectorRef.current.geometry.computeBoundingSphere()
+  })
 
   return (
     <group position={position}>
@@ -115,75 +167,72 @@ function TimelineNode({
       </mesh>
 
       {/* Connector line */}
-      <Line
-        points={[new THREE.Vector3(0, 0, 0), lineEnd]}
-        color={color}
-        lineWidth={0.6}
-        transparent
-        opacity={0.35}
-      />
+      <line ref={connectorRef} geometry={connectorGeometry}>
+        <lineBasicMaterial color={color} transparent opacity={0.35} />
+      </line>
 
       {/* Glass card */}
-      <Html
-        position={[cardOffset, 0, 0]}
-        center
-        distanceFactor={13}
-        style={{ width: 230, pointerEvents: 'none' }}
-      >
-        <div
-          style={{
-            background: 'rgba(6,12,30,0.88)',
-            border: `1px solid ${color}22`,
-            borderLeft: `3px solid ${color}`,
-            borderRadius: 6,
-            padding: '9px 13px',
-            fontFamily: 'JetBrains Mono, monospace',
-            userSelect: 'none',
-            backdropFilter: 'blur(4px)',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
+      <group ref={cardGroupRef} position={[cardOffset, 0, 0]}>
+        <Html
+          center
+          distanceFactor={13}
+          style={{ width: 230, pointerEvents: 'none' }}
         >
-          {/* Scanline */}
           <div
             style={{
-              position: 'absolute',
-              inset: 0,
-              backgroundImage:
-                'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.008) 3px, rgba(255,255,255,0.008) 4px)',
-              pointerEvents: 'none',
+              background: 'rgba(6,12,30,0.88)',
+              border: `1px solid ${color}22`,
+              borderLeft: `3px solid ${color}`,
+              borderRadius: 6,
+              padding: '14px 20px',
+              fontFamily: 'JetBrains Mono, monospace',
+              userSelect: 'none',
+              backdropFilter: 'blur(4px)',
+              position: 'relative',
+              overflow: 'hidden',
             }}
-          />
-
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <div style={{ color, fontSize: 9, fontWeight: 700, letterSpacing: 1 }}>
-              {event.year}
-            </div>
-            <div style={{ color: '#f1f5f9', fontSize: 10.5, fontWeight: 600, marginTop: 3, lineHeight: 1.3 }}>
-              {event.title}
-            </div>
-            {event.company && (
-              <div style={{ color: '#475569', fontSize: 8, marginTop: 2 }}>
-                @ {event.company}
-              </div>
-            )}
+          >
+            {/* Scanline */}
             <div
               style={{
-                color: '#64748b',
-                fontSize: 8.5,
-                marginTop: 5,
-                lineHeight: 1.55,
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
+                position: 'absolute',
+                inset: 0,
+                backgroundImage:
+                  'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.008) 3px, rgba(255,255,255,0.008) 4px)',
+                pointerEvents: 'none',
               }}
-            >
-              {event.description}
+            />
+
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div style={{ color, fontSize: 13, fontWeight: 700, letterSpacing: 1 }}>
+                {event.year}
+              </div>
+              <div style={{ color: '#f1f5f9', fontSize: 15.5, fontWeight: 600, marginTop: 4, lineHeight: 1.3 }}>
+                {event.title}
+              </div>
+              {event.company && (
+                <div style={{ color: '#475569', fontSize: 12, marginTop: 3 }}>
+                  @ {event.company}
+                </div>
+              )}
+              <div
+                style={{
+                  color: '#64748b',
+                  fontSize: 13,
+                  marginTop: 7,
+                  lineHeight: 1.55,
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                }}
+              >
+                {event.description}
+              </div>
             </div>
           </div>
-        </div>
-      </Html>
+        </Html>
+      </group>
     </group>
   )
 }

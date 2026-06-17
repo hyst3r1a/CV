@@ -1,37 +1,115 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Volume2, VolumeX } from 'lucide-react'
 import { useSystem } from '../api/hooks'
 import { useStore } from '../store/useStore'
 
 export default function BackendStatusPanel() {
   const { backendPanelOpen, setBackendPanelOpen } = useStore()
   const { data: system, isLoading, isError, refetch } = useSystem()
+  const audioRef = useRef<HTMLAudioElement>(null)
+  const [soundOn, setSoundOn] = useState(true)
+
+  const playBackgroundAudio = useCallback(() => {
+    const audio = audioRef.current
+    if (!audio || !soundOn) return
+
+    audio.volume = 0.01
+    audio.play().catch(() => {
+      // Autoplay can be blocked until the visitor interacts with the page.
+    })
+  }, [soundOn])
+
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    audio.volume = 0.1
+    audio.loop = true
+
+    if (soundOn) {
+      playBackgroundAudio()
+    } else {
+      audio.pause()
+    }
+  }, [playBackgroundAudio, soundOn])
+
+  useEffect(() => {
+    if (!soundOn) return
+
+    window.addEventListener('pointerdown', playBackgroundAudio, { once: true })
+    window.addEventListener('keydown', playBackgroundAudio, { once: true })
+
+    return () => {
+      window.removeEventListener('pointerdown', playBackgroundAudio)
+      window.removeEventListener('keydown', playBackgroundAudio)
+    }
+  }, [playBackgroundAudio, soundOn])
+
+  const toggleSound = () => {
+    setSoundOn((enabled) => {
+      const nextEnabled = !enabled
+      const audio = audioRef.current
+
+      if (audio && nextEnabled) {
+        audio.volume = 0.1
+        audio.play().catch(() => {
+          // Autoplay can be blocked until the visitor interacts with the page.
+        })
+      } else if (audio) {
+        audio.pause()
+      }
+
+      return nextEnabled
+    })
+  }
 
   return (
     <>
-      {/* Floating trigger button */}
-      <button
-        className="fixed bottom-14 right-6 z-30 pointer-events-auto flex items-center gap-2 px-3 py-2 rounded font-mono text-xs transition-all duration-200"
-        style={{
-          background: 'rgba(10,15,35,0.85)',
-          border: '1px solid rgba(34,211,238,0.3)',
-          color: '#22d3ee',
-          backdropFilter: 'blur(8px)',
-          boxShadow: '0 0 16px rgba(34,211,238,0.15)',
-        }}
-        onClick={() => setBackendPanelOpen(!backendPanelOpen)}
-      >
-        <span
+      <audio ref={audioRef} src="/background.mp3" preload="auto" loop />
+
+      {/* Floating trigger buttons */}
+      <div className="fixed bottom-14 right-6 z-30 pointer-events-auto flex items-center gap-2">
+        <button
+          aria-label={soundOn ? 'Turn background sound off' : 'Turn background sound on'}
+          title={soundOn ? 'Sound on' : 'Sound off'}
+          className="flex h-8 w-8 items-center justify-center rounded transition-all duration-200"
           style={{
-            width: 6,
-            height: 6,
-            borderRadius: '50%',
-            background: isError ? '#ef4444' : '#22d3ee',
-            boxShadow: `0 0 6px ${isError ? '#ef4444' : '#22d3ee'}`,
-            display: 'inline-block',
+            background: 'rgba(10,15,35,0.85)',
+            border: '1px solid rgba(34,211,238,0.3)',
+            color: soundOn ? '#22d3ee' : '#64748b',
+            backdropFilter: 'blur(8px)',
+            boxShadow: soundOn ? '0 0 16px rgba(34,211,238,0.15)' : 'none',
           }}
-        />
-        {backendPanelOpen ? 'HIDE API' : 'LIVE API'}
-      </button>
+          onClick={toggleSound}
+        >
+          {soundOn ? <Volume2 size={15} /> : <VolumeX size={15} />}
+        </button>
+
+        <button
+          className="flex items-center gap-2 px-3 py-2 rounded font-mono text-xs transition-all duration-200"
+          style={{
+            background: 'rgba(10,15,35,0.85)',
+            border: '1px solid rgba(34,211,238,0.3)',
+            color: '#22d3ee',
+            backdropFilter: 'blur(8px)',
+            boxShadow: '0 0 16px rgba(34,211,238,0.15)',
+          }}
+          onClick={() => setBackendPanelOpen(!backendPanelOpen)}
+        >
+          <span
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              background: isError ? '#ef4444' : '#22d3ee',
+              boxShadow: `0 0 6px ${isError ? '#ef4444' : '#22d3ee'}`,
+              display: 'inline-block',
+            }}
+          />
+          {backendPanelOpen ? 'HIDE API' : 'LIVE API'}
+        </button>
+      </div>
 
       <AnimatePresence>
         {backendPanelOpen && (

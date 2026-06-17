@@ -24,6 +24,6 @@ export const useStore = create<AppStore>((set) => ({
     set((s) => ({ recruiterMode: !s.recruiterMode })),
   selectedSkill: null,
   setSelectedSkill: (skill) => set({ selectedSkill: skill }),
-  backendPanelOpen: true,
+  backendPanelOpen: false,
   setBackendPanelOpen: (open) => set({ backendPanelOpen: open }),
 }))

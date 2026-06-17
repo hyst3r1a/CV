@@ -116,16 +116,19 @@ export default function HeroStation() {
             textAlign: 'center',
             fontFamily: 'JetBrains Mono, monospace',
             userSelect: 'none',
+            filter: 'drop-shadow(0 8px 18px rgba(0,0,0,0.85))',
           }}
         >
           <div
             style={{
               fontSize: 9,
               letterSpacing: 5,
-              color: '#22d3ee',
+              color: '#fde68a',
               marginBottom: 10,
               textTransform: 'uppercase',
-              opacity: 0.8,
+              opacity: 0.95,
+              textShadow:
+                '0 1px 2px rgba(0,0,0,1), 0 0 10px rgba(251,191,36,0.65), 0 0 24px rgba(251,191,36,0.25)',
               animation: 'data-flicker 8s ease-in-out infinite',
             }}
           >
@@ -135,10 +138,10 @@ export default function HeroStation() {
             style={{
               fontSize: 26,
               fontWeight: 700,
-              color: '#f1f5f9',
+              color: '#fff7ed',
               lineHeight: 1.25,
               textShadow:
-                '0 0 20px rgba(34,211,238,0.7), 0 0 50px rgba(34,211,238,0.3), 0 0 80px rgba(34,211,238,0.1)',
+                '0 2px 3px rgba(0,0,0,1), 0 0 2px rgba(0,0,0,1), 0 0 18px rgba(251,191,36,0.7), 0 0 46px rgba(34,211,238,0.32)',
               letterSpacing: 1,
             }}
           >
@@ -147,11 +150,13 @@ export default function HeroStation() {
           <div
             style={{
               fontSize: 9,
-              color: '#7dd3fc',
+              color: '#e0f2fe',
               marginTop: 7,
               letterSpacing: 3,
               textTransform: 'uppercase',
-              opacity: 0.75,
+              opacity: 0.95,
+              textShadow:
+                '0 1px 2px rgba(0,0,0,1), 0 0 12px rgba(14,165,233,0.55), 0 0 28px rgba(251,191,36,0.18)',
             }}
           >
             XR · Omniverse · Full Stack Systems
@@ -171,15 +176,15 @@ export default function HeroStation() {
               style={{
                 height: 1,
                 width: 40,
-                background: 'linear-gradient(90deg, transparent, rgba(34,211,238,0.5))',
+                background: 'linear-gradient(90deg, transparent, rgba(251,191,36,0.7))',
               }}
             />
-            <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#22d3ee', boxShadow: '0 0 6px #22d3ee' }} />
+            <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#fbbf24', boxShadow: '0 0 8px #fbbf24' }} />
             <div
               style={{
                 height: 1,
                 width: 40,
-                background: 'linear-gradient(90deg, rgba(34,211,238,0.5), transparent)',
+                background: 'linear-gradient(90deg, rgba(251,191,36,0.7), transparent)',
               }}
             />
           </div>
@@ -191,11 +196,13 @@ export default function HeroStation() {
         <div
           style={{
             fontFamily: 'JetBrains Mono, monospace',
-            color: '#334155',
+            color: '#bae6fd',
             fontSize: 8,
             letterSpacing: 3,
             animation: 'pulse 2.5s ease-in-out infinite',
             textAlign: 'center',
+            opacity: 0.85,
+            textShadow: '0 1px 2px rgba(0,0,0,1), 0 0 12px rgba(14,165,233,0.5)',
           }}
         >
           SCROLL TO NAVIGATE

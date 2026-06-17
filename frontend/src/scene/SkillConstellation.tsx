@@ -6,6 +6,8 @@ import { useSkills } from '../api/hooks'
 import { useStore } from '../store/useStore'
 
 const STATION_Y = -8
+const STAR_SCALE = 1.5
+const LABEL_SCALE = 2
 
 export default function SkillConstellation() {
   const { data: skills = [] } = useSkills()
@@ -14,15 +16,20 @@ export default function SkillConstellation() {
   const groupRef = useRef<THREE.Group>(null)
 
   const nodes = useMemo(() => {
+    const total = Math.min(skills.length, 16)
     return skills.slice(0, 16).map((skill, i) => {
-      const angle = (i / Math.min(skills.length, 16)) * Math.PI * 2
-      const radius = 3.5 + (i % 3) * 1.2
+      // Helix: 1.5 turns so nodes are spread in X/Z and staggered in Y/Z depth
+      const t      = i / Math.max(total - 1, 1)
+      const angle  = t * Math.PI * 3           // 1.5 full turns
+      const radius = 4.0 + (i % 2) * 0.8      // alternating inner/outer ring
+      const helixY = STATION_Y + (t - 0.5) * 5 // ±2.5 units vertical spread
+      const helixZ = Math.cos(t * Math.PI * 2) * 1.5 // ±1.5 depth variation
       return {
         ...skill,
         pos: new THREE.Vector3(
           Math.cos(angle) * radius,
-          STATION_Y + Math.sin(i * 1.3) * 1.5,
-          Math.sin(angle) * radius,
+          helixY,
+          Math.sin(angle) * radius + helixZ,
         ),
       }
     })
@@ -31,13 +38,9 @@ export default function SkillConstellation() {
   const linePoints = useMemo(() => {
     if (nodes.length < 2) return []
     const pairs: [THREE.Vector3, THREE.Vector3][] = []
-    nodes.forEach((n, i) => {
-      const next = nodes[(i + 1) % nodes.length]
-      pairs.push([n.pos, next.pos])
-      if (i % 3 === 0 && i + 4 < nodes.length) {
-        pairs.push([n.pos, nodes[i + 4].pos])
-      }
-    })
+    for (let i = 0; i < nodes.length - 1; i++) {
+      pairs.push([nodes[i].pos, nodes[i + 1].pos])
+    }
     return pairs
   }, [nodes])
 
@@ -54,9 +57,10 @@ export default function SkillConstellation() {
           key={i}
           points={pair}
           color="#22d3ee"
-          lineWidth={0.4}
+          lineWidth={1.2}
           transparent
-          opacity={0.25}
+          opacity={0.36}
+          depthWrite={false}
         />
       ))}
       {nodes.map((node) => (
@@ -93,7 +97,7 @@ function SkillNode({
     }
   })
 
-  const size = 0.12 + (node.proficiency / 100) * 0.18
+  const size = (0.12 + (node.proficiency / 100) * 0.18) * STAR_SCALE
 
   return (
     <group position={node.pos}>
@@ -120,37 +124,23 @@ function SkillNode({
       >
         <div
           style={{
-            background: selected ? 'rgba(15,20,40,0.92)' : 'rgba(15,20,40,0.6)',
-            border: `1px solid ${node.color}55`,
-            borderRadius: 6,
-            padding: selected ? '8px 12px' : '3px 7px',
+            background: selected ? 'rgba(15,20,40,0.92)' : hovered ? 'rgba(15,20,40,0.80)' : 'rgba(15,20,40,0.55)',
+            border: `1px solid ${node.color}${selected ? '55' : hovered ? '44' : '22'}`,
+            borderRadius: selected || hovered ? 12 : 8,
+            padding: selected ? '16px 24px' : hovered ? '6px 14px' : '4px 10px',
             color: '#e2e8f0',
-            fontSize: selected ? 11 : 9,
             whiteSpace: 'nowrap',
             fontFamily: 'JetBrains Mono, monospace',
             transition: 'all 0.2s',
           }}
         >
-          <div style={{ color: node.color, fontWeight: 700, fontSize: selected ? 12 : 9 }}>
+          <div style={{ color: node.color, fontWeight: 700, fontSize: (selected ? 12 : hovered ? 9 : 7.5) * LABEL_SCALE }}>
             {node.name}
           </div>
           {selected && (
-            <>
-              <div style={{ color: '#94a3b8', marginTop: 2 }}>{node.category}</div>
-              <div style={{ marginTop: 4, height: 4, background: '#1e293b', borderRadius: 2 }}>
-                <div
-                  style={{
-                    height: '100%',
-                    width: `${node.proficiency}%`,
-                    background: `linear-gradient(90deg, ${node.color}, #22d3ee)`,
-                    borderRadius: 2,
-                  }}
-                />
-              </div>
-              <div style={{ color: '#64748b', fontSize: 9, marginTop: 2 }}>
-                {node.proficiency}% proficiency
-              </div>
-            </>
+            <div style={{ color: '#94a3b8', marginTop: 4, fontSize: 18 }}>
+              {node.category}
+            </div>
           )}
         </div>
       </Html>

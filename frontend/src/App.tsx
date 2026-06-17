@@ -6,22 +6,24 @@ import OrbitalScene from './scene/OrbitalScene'
 import Hud from './components/Hud'
 import BackendStatusPanel from './components/BackendStatusPanel'
 import RecruiterMode from './components/RecruiterMode'
+import AdminPage from './components/AdminPage'
 import { useStore } from './store/useStore'
 
 const SCROLL_SPEED = 1 / (window.innerHeight * 3.5)
 
 export default function App() {
   const { setScrollProgress, recruiterMode } = useStore()
+  const adminPage = window.location.pathname === '/admin' || window.location.hash === '#admin'
 
   const handleWheel = useCallback(
     (e: WheelEvent) => {
-      if (recruiterMode) return
+      if (recruiterMode || adminPage) return
       e.preventDefault()
       setScrollProgress(
         Math.min(1, Math.max(0, useStore.getState().scrollProgress + e.deltaY * SCROLL_SPEED)),
       )
     },
-    [recruiterMode, setScrollProgress],
+    [adminPage, recruiterMode, setScrollProgress],
   )
 
   useEffect(() => {
@@ -32,7 +34,7 @@ export default function App() {
     }
 
     const onTouchMove = (e: TouchEvent) => {
-      if (recruiterMode) return
+      if (recruiterMode || adminPage) return
       const dy = lastY - e.touches[0].clientY
       lastY = e.touches[0].clientY
       setScrollProgress(
@@ -49,7 +51,9 @@ export default function App() {
       window.removeEventListener('touchstart', onTouchStart)
       window.removeEventListener('touchmove', onTouchMove)
     }
-  }, [handleWheel, recruiterMode, setScrollProgress])
+  }, [adminPage, handleWheel, recruiterMode, setScrollProgress])
+
+  if (adminPage) return <AdminPage />
 
   return (
     <div style={{ width: '100vw', height: '100vh', background: '#000', overflow: 'hidden' }}>

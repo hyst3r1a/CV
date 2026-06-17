@@ -1,11 +1,11 @@
 import { useRef, useState, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { Html, RoundedBox } from '@react-three/drei'
+import { Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { useSystem } from '../api/hooks'
 import type { SystemStatus } from '../api/client'
 
-const STATION_Y = -32
+const STATION_Y = -50
 
 const reducedMotion =
   typeof window !== 'undefined' &&
@@ -42,41 +42,7 @@ export default function BackendStation() {
 
   return (
     <group ref={panelRef} position={[0, STATION_Y, 0]}>
-      {/* Main glass panel — tall enough to hold all content without clipping */}
-      <RoundedBox args={[7.6, 7.2, 0.09]} radius={0.1} smoothness={4}>
-        <meshPhysicalMaterial
-          color="#030810"
-          transparent
-          opacity={0.93}
-          roughness={0.04}
-          metalness={0.2}
-          reflectivity={0.95}
-        />
-      </RoundedBox>
-
-      {/* Top edge — reactor status strip */}
-      <mesh position={[0, 3.52, 0.06]}>
-        <planeGeometry args={[7.5, 0.06]} />
-        <meshBasicMaterial color="#22d3ee" transparent opacity={0.85} />
-      </mesh>
-
-      {/* Side accent lines */}
-      <mesh position={[-3.72, 0, 0.06]}>
-        <planeGeometry args={[0.03, 7.1]} />
-        <meshBasicMaterial color="#22d3ee" transparent opacity={0.3} />
-      </mesh>
-      <mesh position={[3.72, 0, 0.06]}>
-        <planeGeometry args={[0.03, 7.1]} />
-        <meshBasicMaterial color="#22d3ee" transparent opacity={0.3} />
-      </mesh>
-
-      {/* Bottom fade — soft edge so content doesn't hard-clip */}
-      <mesh position={[0, -3.3, 0.07]}>
-        <planeGeometry args={[7.4, 1.0]} />
-        <meshBasicMaterial color="#030810" transparent opacity={0.9} />
-      </mesh>
-
-      <Html center distanceFactor={11} transform style={{ width: 580, userSelect: 'none' }}>
+      <Html center distanceFactor={11} transform style={{ width: 500, height: 480, overflow: 'hidden', userSelect: 'none' }}>
         <ReactorConsole system={system} isLoading={isLoading} isError={isError} />
       </Html>
     </group>
@@ -143,36 +109,12 @@ function ReactorConsole({
         color: '#cbd5e1',
         position: 'relative',
         overflow: 'hidden',
+        width: '100%',
+        height: '100%',
+        boxSizing: 'border-box',
+        padding: '14px 18px',
       }}
     >
-      {/* Reactor scanline sweep */}
-      {!reducedMotion && (
-        <div
-          style={{
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            height: 2,
-            background: 'linear-gradient(90deg, transparent, rgba(34,211,238,0.18), transparent)',
-            animation: 'reactor-scan 3.5s linear infinite',
-            pointerEvents: 'none',
-            zIndex: 10,
-          }}
-        />
-      )}
-
-      {/* Hex grid overlay */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage:
-            'repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(34,211,238,0.025) 19px, rgba(34,211,238,0.025) 20px), repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(34,211,238,0.025) 19px, rgba(34,211,238,0.025) 20px)',
-          pointerEvents: 'none',
-          zIndex: 0,
-        }}
-      />
-
       <div style={{ position: 'relative', zIndex: 1 }}>
         {/* ── Header ── */}
         <div
