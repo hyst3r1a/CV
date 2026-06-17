@@ -1,6 +1,6 @@
 package com.mike.orbitcv.controller;
 
-import com.mike.orbitcv.entity.VideoEntity;
+import com.mike.orbitcv.dto.VideoDto;
 import com.mike.orbitcv.service.VideoService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +18,7 @@ public class VideoController {
     }
 
     @GetMapping
-    public List<VideoEntity> getVideos() {
+    public List<VideoDto> getVideos() {
         return service.findAll();
     }
 }

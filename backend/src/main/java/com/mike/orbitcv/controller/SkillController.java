@@ -1,6 +1,6 @@
 package com.mike.orbitcv.controller;
 
-import com.mike.orbitcv.entity.SkillEntity;
+import com.mike.orbitcv.dto.SkillDto;
 import com.mike.orbitcv.service.SkillService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +18,7 @@ public class SkillController {
     }
 
     @GetMapping
-    public List<SkillEntity> getSkills() {
+    public List<SkillDto> getSkills() {
         return service.findAll();
     }
 }

@@ -1,6 +1,6 @@
 package com.mike.orbitcv.controller;
 
-import com.mike.orbitcv.entity.TimelineEventEntity;
+import com.mike.orbitcv.dto.TimelineEventDto;
 import com.mike.orbitcv.service.TimelineService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +18,7 @@ public class TimelineController {
     }
 
     @GetMapping
-    public List<TimelineEventEntity> getTimeline() {
+    public List<TimelineEventDto> getTimeline() {
         return service.findAll();
     }
 }
