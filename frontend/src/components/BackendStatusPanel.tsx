@@ -69,12 +69,15 @@ export default function BackendStatusPanel() {
 
             <div style={{ padding: '12px 14px' }}>
               {isLoading && (
-                <div className="text-slate-500 text-center py-4">connecting…</div>
+                <div className="text-slate-500 text-center py-4">
+                  connecting to Spring Boot…
+                  <div className="text-slate-700 mt-1 text-xs">may take ~30s on cold start</div>
+                </div>
               )}
               {isError && (
-                <div className="text-red-400 text-center py-4">
-                  ⚠ backend unreachable
-                  <div className="text-slate-600 mt-1">start: java -jar target/*.jar</div>
+                <div className="text-amber-400 text-center py-4">
+                  backend warming up
+                  <div className="text-slate-600 mt-1">Render free tier — refresh in 30s</div>
                 </div>
               )}
               {system && (

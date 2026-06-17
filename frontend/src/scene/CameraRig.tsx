@@ -4,38 +4,65 @@ import * as THREE from 'three'
 import { useStore } from '../store/useStore'
 
 const stations = [
-  { position: new THREE.Vector3(0, 0, 12), lookAt: new THREE.Vector3(0, 0, 0) },
-  { position: new THREE.Vector3(0, -8, 10), lookAt: new THREE.Vector3(0, -8, 0) },
+  { position: new THREE.Vector3(0, 0, 12),   lookAt: new THREE.Vector3(0, 0, 0)   },
+  { position: new THREE.Vector3(0, -8, 10),  lookAt: new THREE.Vector3(0, -8, 0)  },
   { position: new THREE.Vector3(8, -16, 10), lookAt: new THREE.Vector3(0, -16, 0) },
-  { position: new THREE.Vector3(-8, -24, 10), lookAt: new THREE.Vector3(0, -24, 0) },
+  { position: new THREE.Vector3(-8, -24, 10),lookAt: new THREE.Vector3(0, -24, 0) },
   { position: new THREE.Vector3(0, -32, 12), lookAt: new THREE.Vector3(0, -32, 0) },
 ]
 
-const targetPos = new THREE.Vector3()
+/** Cubic smoothstep — eliminates linear ramp feel between stations */
+function smoothstep(t: number): number {
+  const c = Math.max(0, Math.min(1, t))
+  return c * c * (3 - 2 * c)
+}
+
+const reducedMotion =
+  typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+// Pre-allocated scratch vectors — zero GC pressure per frame
+const targetPos  = new THREE.Vector3()
 const targetLook = new THREE.Vector3()
 const currentLook = new THREE.Vector3()
+const sway        = new THREE.Vector3()
+const swayedPos   = new THREE.Vector3()
 
 export default function CameraRig() {
   const { camera } = useThree()
   const scrollProgress = useStore((s) => s.scrollProgress)
   const initialized = useRef(false)
 
-  useFrame(() => {
-    const t = scrollProgress * (stations.length - 1)
+  useFrame((state) => {
+    const t    = scrollProgress * (stations.length - 1)
     const from = Math.floor(t)
-    const to = Math.min(Math.ceil(t), stations.length - 1)
-    const alpha = t - from
+    const to   = Math.min(Math.ceil(t), stations.length - 1)
+    const alpha = smoothstep(t - from)
 
     targetPos.lerpVectors(stations[from].position, stations[to].position, alpha)
-    targetLook.lerpVectors(stations[from].lookAt, stations[to].lookAt, alpha)
+    targetLook.lerpVectors(stations[from].lookAt,  stations[to].lookAt,  alpha)
 
     if (!initialized.current) {
       camera.position.copy(stations[0].position)
+      currentLook.copy(stations[0].lookAt)
       initialized.current = true
     }
 
-    camera.position.lerp(targetPos, 0.06)
-    currentLook.lerp(targetLook, 0.06)
+    if (!reducedMotion) {
+      // Slow sinusoidal orbital drift — gives the scene a "breathing" quality
+      const et = state.clock.elapsedTime
+      sway.set(
+        Math.sin(et * 0.13) * 0.28,
+        Math.cos(et * 0.09) * 0.13,
+        Math.sin(et * 0.07) * 0.1,
+      )
+      swayedPos.copy(targetPos).add(sway)
+    } else {
+      swayedPos.copy(targetPos)
+    }
+
+    camera.position.lerp(swayedPos, 0.055)
+    currentLook.lerp(targetLook, 0.055)
     camera.lookAt(currentLook)
   })
 

@@ -1,4 +1,5 @@
 import { useStore } from '../store/useStore'
+import { useSystem } from '../api/hooks'
 
 const STATIONS = [
   { label: 'DOCKING BAY', icon: '◎' },
@@ -10,6 +11,7 @@ const STATIONS = [
 
 export default function Hud() {
   const { currentStation, scrollProgress, toggleRecruiterMode, recruiterMode } = useStore()
+  const { data: system, isError: apiError, isLoading: apiLoading } = useSystem()
 
   return (
     <div className="fixed inset-0 pointer-events-none z-20 select-none">
@@ -24,6 +26,14 @@ export default function Hud() {
             style={{ boxShadow: '0 0 8px #22d3ee', animation: 'pulse 2s infinite' }}
           />
           <span className="text-xs text-cyan-400 tracking-widest font-mono">ORBITAL CV</span>
+          <div className="flex items-center gap-1.5 font-mono text-xs" style={{ color: apiError ? '#f59e0b' : system ? '#22c55e' : '#475569' }}>
+            <span style={{
+              width: 5, height: 5, borderRadius: '50%', display: 'inline-block',
+              background: apiError ? '#f59e0b' : system ? '#22c55e' : '#475569',
+              boxShadow: system && !apiError ? '0 0 5px #22c55e' : 'none',
+            }} />
+            {apiLoading ? 'API…' : apiError ? 'WARMING UP' : 'SPRING BOOT LIVE'}
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <span className="text-xs text-slate-500 font-mono">

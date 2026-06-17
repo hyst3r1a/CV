@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useStore } from '../store/useStore'
 import { useSkills, useProjects, useTimeline } from '../api/hooks'
+import { api } from '../api/client'
 
 const CATEGORY_ORDER = ['3D / XR', 'Frontend', 'Backend', 'Systems', 'DevOps']
 
@@ -9,6 +11,24 @@ export default function RecruiterMode() {
   const { data: skills = [] } = useSkills()
   const { data: projects = [] } = useProjects()
   const { data: timeline = [] } = useTimeline()
+  const [form, setForm] = useState({ name: '', email: '', message: '' })
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [submitError, setSubmitError] = useState('')
+
+  const handleContact = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setSubmitError('')
+    try {
+      await api.contactIntent(form)
+      setSubmitted(true)
+    } catch {
+      setSubmitError('Could not reach backend — it may be warming up. Try again in 30s.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   const byCategory = CATEGORY_ORDER.reduce<Record<string, typeof skills>>((acc, cat) => {
     acc[cat] = skills.filter((s) => s.category === cat)
@@ -39,7 +59,7 @@ export default function RecruiterMode() {
             XR ENGINEER · OMNIVERSE DEVELOPER · FULL STACK SYSTEMS
           </p>
           <div className="flex flex-wrap gap-4 text-xs text-slate-500">
-            <span>📧 miklehigaran@gmail.com</span>
+            <a href="mailto:miklehigaran@gmail.com" className="hover:text-cyan-400 transition-colors">📧 miklehigaran@gmail.com</a>
             <span>🔗 github.com/mikle-higaran</span>
             <span>🌐 orbital-cv.onrender.com</span>
           </div>
@@ -156,6 +176,60 @@ export default function RecruiterMode() {
               </div>
             ))}
           </div>
+        </section>
+
+        {/* Contact */}
+        <section className="mb-10">
+          <h2 className="text-xs text-cyan-400 tracking-widest mb-4 uppercase">Contact</h2>
+          {submitted ? (
+            <div className="border border-cyan-400/20 rounded p-4 text-center">
+              <div className="text-cyan-400 text-sm font-semibold mb-1">Message received ✓</div>
+              <div className="text-slate-500 text-xs">Persisted via Hibernate → SQLite — try POST /api/contact-intent to verify</div>
+            </div>
+          ) : (
+            <form onSubmit={handleContact} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  placeholder="Name"
+                  value={form.name}
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  required
+                  className="bg-slate-900 border border-slate-700 rounded px-3 py-2 text-xs text-white placeholder-slate-600 focus:border-cyan-400 focus:outline-none transition-colors"
+                />
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={form.email}
+                  onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                  required
+                  className="bg-slate-900 border border-slate-700 rounded px-3 py-2 text-xs text-white placeholder-slate-600 focus:border-cyan-400 focus:outline-none transition-colors"
+                />
+              </div>
+              <textarea
+                placeholder="Message"
+                value={form.message}
+                onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
+                required
+                rows={3}
+                className="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-xs text-white placeholder-slate-600 focus:border-cyan-400 focus:outline-none transition-colors resize-none"
+              />
+              {submitError && <div className="text-amber-400 text-xs">{submitError}</div>}
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full py-2 rounded border text-xs font-mono transition-all duration-200"
+                style={{
+                  background: submitting ? 'rgba(34,211,238,0.05)' : 'rgba(34,211,238,0.08)',
+                  borderColor: 'rgba(34,211,238,0.35)',
+                  color: '#22d3ee',
+                  opacity: submitting ? 0.7 : 1,
+                }}
+              >
+                {submitting ? 'SENDING…' : 'SEND → POST /api/contact-intent → Hibernate → SQLite'}
+              </button>
+            </form>
+          )}
         </section>
 
         <footer className="border-t border-slate-800 pt-6 text-xs text-slate-600 text-center">

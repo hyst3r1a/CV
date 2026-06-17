@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { AnimatePresence } from 'framer-motion'
+import * as THREE from 'three'
 import OrbitalScene from './scene/OrbitalScene'
 import Hud from './components/Hud'
 import BackendStatusPanel from './components/BackendStatusPanel'
@@ -22,10 +23,6 @@ export default function App() {
     },
     [recruiterMode, setScrollProgress],
   )
-
-  const handleTouch = useCallback(() => {
-    // Touch scroll handled via touchmove
-  }, [])
 
   useEffect(() => {
     let lastY = 0
@@ -52,34 +49,32 @@ export default function App() {
       window.removeEventListener('touchstart', onTouchStart)
       window.removeEventListener('touchmove', onTouchMove)
     }
-  }, [handleWheel, handleTouch, recruiterMode, setScrollProgress])
+  }, [handleWheel, recruiterMode, setScrollProgress])
 
   return (
     <div style={{ width: '100vw', height: '100vh', background: '#000', overflow: 'hidden' }}>
-      {/* 3D Canvas — always mounted so camera state is preserved */}
       <div
         className="fixed inset-0 z-0"
-        style={{ opacity: recruiterMode ? 0.05 : 1, transition: 'opacity 0.4s' }}
+        style={{ opacity: recruiterMode ? 0.04 : 1, transition: 'opacity 0.6s ease' }}
       >
         <Canvas
-          camera={{ position: [0, 0, 12], fov: 60, near: 0.1, far: 200 }}
-          gl={{ antialias: true, alpha: false }}
+          camera={{ position: [0, 0, 12], fov: 58, near: 0.1, far: 250 }}
+          gl={{
+            antialias: true,
+            alpha: false,
+            toneMapping: THREE.ACESFilmicToneMapping,
+            toneMappingExposure: 1.15,
+          }}
           dpr={[1, 1.5]}
-          style={{ background: '#000008' }}
+          style={{ background: '#00000a' }}
         >
           <OrbitalScene />
         </Canvas>
       </div>
 
-      {/* HUD overlay */}
-      {!recruiterMode && (
-        <>
-          <Hud />
-          <BackendStatusPanel />
-        </>
-      )}
+      {!recruiterMode && <Hud />}
+      <BackendStatusPanel />
 
-      {/* Recruiter mode full-screen overlay */}
       <AnimatePresence>{recruiterMode && <RecruiterMode />}</AnimatePresence>
     </div>
   )

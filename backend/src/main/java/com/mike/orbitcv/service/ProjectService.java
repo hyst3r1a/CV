@@ -29,7 +29,7 @@ public class ProjectService {
         dto.setTitle(e.getTitle());
         dto.setDescription(e.getDescription());
         dto.setTechStack(e.getTechStack() == null ? List.of()
-                : Arrays.asList(e.getTechStack().split(",")));
+                : Arrays.stream(e.getTechStack().split(",")).map(String::trim).collect(Collectors.toList()));
         dto.setVideoUrl(e.getVideoUrl());
         dto.setThumbnailUrl(e.getThumbnailUrl());
         dto.setGithubUrl(e.getGithubUrl());
