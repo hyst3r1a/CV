@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  font-family: 'JetBrains Mono', monospace;
+  color: #e2e8f0;
+}
+
+/* Scrollbar hidden for wheel-driven navigation */
+::-webkit-scrollbar { display: none; }
+
+/* Glass panel base */
+.glass {
+  background: rgba(15, 20, 40, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(99, 202, 255, 0.15);
+  border-radius: 12px;
+}
+
+/* Glow text */
+.glow-cyan {
+  text-shadow: 0 0 20px rgba(34, 211, 238, 0.8), 0 0 40px rgba(34, 211, 238, 0.4);
+}
+
+.glow-violet {
+  text-shadow: 0 0 20px rgba(167, 139, 250, 0.8), 0 0 40px rgba(167, 139, 250, 0.4);
+}
+
+/* Scan line animation */
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+.scanline::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.3), transparent);
+  animation: scanline 4s linear infinite;
+  pointer-events: none;
+}
+
+/* Recruiter mode print */
+@media print {
+  .no-print { display: none !important; }
+  .recruiter-content { box-shadow: none !important; }
+}
