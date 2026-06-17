@@ -5,7 +5,7 @@ import * as THREE from 'three'
 import { useSystem } from '../api/hooks'
 import type { SystemStatus } from '../api/client'
 
-const STATION_Y = -50
+const STATION_Y = -78
 
 const reducedMotion =
   typeof window !== 'undefined' &&
@@ -33,10 +33,10 @@ export default function BackendStation() {
   const { data: system, isLoading, isError } = useSystem()
   const { size } = useThree()
   const panelRef = useRef<THREE.Group>(null)
-  const PANEL_W = 900
-  const PANEL_H = 690
+  const PANEL_W = 1040
+  const PANEL_H = 760
   const isPortrait = size.width < size.height
-  const panelScale = isPortrait ? Math.min(0.72, Math.max(0.42, (size.width - 28) / PANEL_W)) : 1
+  const panelScale = isPortrait ? Math.min(0.86, Math.max(0.58, (size.width - 28) / PANEL_W)) : 1
 
   useFrame((state) => {
     if (!panelRef.current || reducedMotion) return
@@ -47,7 +47,7 @@ export default function BackendStation() {
 
   return (
     <group ref={panelRef} position={[0, STATION_Y, 0]}>
-      <Html center distanceFactor={11} style={{ width: PANEL_W, height: PANEL_H, overflow: 'hidden', userSelect: 'none' }}>
+      <Html center distanceFactor={20} style={{ width: PANEL_W, height: PANEL_H, overflow: 'hidden', userSelect: 'none' }}>
         <div
           style={{
             width: PANEL_W,

@@ -1,10 +1,10 @@
 import { useMemo, useRef, useState } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import { Html, Line } from '@react-three/drei'
 import * as THREE from 'three'
 import { useTimeline } from '../api/hooks'
 
-const STATION_Y = -30
+const TIMELINE_START_Y = -30
 
 const reducedMotion =
   typeof window !== 'undefined' &&
@@ -14,6 +14,7 @@ const TYPE_COLOR: Record<string, string> = {
   JOB:         '#22d3ee',
   ACHIEVEMENT: '#f59e0b',
   AWARD:       '#a78bfa',
+  EDUCATION:   '#a78bfa',
 }
 
 const CARD_FLOAT_RADIUS = 0.36
@@ -32,13 +33,15 @@ function randomPointInSphere(radius: number) {
 
 export default function TimelineElevator() {
   const { data: events = [] } = useTimeline()
+  const { size } = useThree()
   const [expandedEventId, setExpandedEventId] = useState<number | null>(null)
+  const isPortrait = size.width < size.height
 
-  // Min 2.2 units per entry so cards never crowd; cap at 3.0 for short lists
-  const spacing = Math.min(3.0, Math.max(2.2, 20.0 / Math.max(events.length, 1)))
+  // Top-anchored so adding entries grows the timeline downward, never up into Projects.
+  const spacing = isPortrait ? 2.18 : 2.35
 
   const linePoints: THREE.Vector3[] = events.map((_, i) => {
-    const y = STATION_Y + (i - (events.length - 1) / 2) * spacing
+    const y = TIMELINE_START_Y - i * spacing
     return new THREE.Vector3(0, y, 0)
   })
 
@@ -46,15 +49,15 @@ export default function TimelineElevator() {
     <group>
       {/* Station label */}
       <Html
-        position={[0, STATION_Y + (events.length / 2) * spacing + 1.0, 0]}
+        position={[0, TIMELINE_START_Y + 1.25, 0]}
         center
-        distanceFactor={13}
+        distanceFactor={18}
         style={{ pointerEvents: 'none' }}
       >
         <div
           style={{
             fontFamily: 'JetBrains Mono, monospace',
-            fontSize: 8,
+            fontSize: 10,
             letterSpacing: 5,
             color: '#22d3ee',
             opacity: 0.45,
@@ -77,14 +80,14 @@ export default function TimelineElevator() {
       )}
 
       {events.map((event, i) => {
-        const y    = STATION_Y + (i - (events.length - 1) / 2) * spacing
+        const y    = TIMELINE_START_Y - i * spacing
         const side = i % 2 === 0 ? 1 : -1
         return (
           <TimelineNode
             key={event.id}
             event={event}
             position={new THREE.Vector3(0, y, 0)}
-            cardOffset={side * 4.8}
+            cardOffset={side * (isPortrait ? 4 : 5.4)}
             index={i}
             expanded={expandedEventId === event.id}
             onToggle={() => setExpandedEventId(expandedEventId === event.id ? null : event.id)}
@@ -190,8 +193,8 @@ function TimelineNode({
       <group ref={cardGroupRef} position={[cardOffset, 0, 0]}>
         <Html
           center
-          distanceFactor={13}
-          style={{ width: expanded ? 310 : 230, pointerEvents: 'auto' }}
+          distanceFactor={18}
+          style={{ width: expanded ? 430 : 330, pointerEvents: 'auto' }}
         >
           <div
             data-no-page-drag="true"
@@ -204,7 +207,7 @@ function TimelineNode({
               border: `1px solid ${color}${expanded ? '55' : '22'}`,
               borderLeft: `3px solid ${color}`,
               borderRadius: 6,
-              padding: expanded ? '16px 20px 18px' : '14px 20px',
+              padding: expanded ? '22px 28px 24px' : '18px 25px',
               fontFamily: 'JetBrains Mono, monospace',
               userSelect: 'none',
               backdropFilter: 'blur(4px)',
@@ -227,23 +230,23 @@ function TimelineNode({
             />
 
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <div style={{ color, fontSize: 13, fontWeight: 700, letterSpacing: 1 }}>
+              <div style={{ color, fontSize: 18, fontWeight: 700, letterSpacing: 1 }}>
                 {event.year}
               </div>
-              <div style={{ color: '#f1f5f9', fontSize: 15.5, fontWeight: 600, marginTop: 4, lineHeight: 1.3 }}>
+              <div style={{ color: '#f1f5f9', fontSize: 21, fontWeight: 600, marginTop: 6, lineHeight: 1.25 }}>
                 {event.title}
               </div>
               {event.company && (
-                <div style={{ color: '#475569', fontSize: 12, marginTop: 3 }}>
+                <div style={{ color: '#475569', fontSize: 15, marginTop: 5 }}>
                   @ {event.company}
                 </div>
               )}
               <div
                 style={{
                   color: expanded ? '#94a3b8' : '#64748b',
-                  fontSize: 13,
-                  marginTop: 7,
-                  lineHeight: 1.55,
+                  fontSize: 16,
+                  marginTop: 10,
+                  lineHeight: 1.5,
                   display: expanded ? 'block' : '-webkit-box',
                   WebkitLineClamp: expanded ? 'unset' : 2,
                   WebkitBoxOrient: 'vertical',

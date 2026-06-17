@@ -7,7 +7,19 @@ import { useStore } from '../store/useStore'
 
 const STATION_Y = -8
 const STAR_SCALE = 1.5
-const LABEL_SCALE = 2
+const LABEL_SCALE = 1.55
+
+function readableSkillColor(color: string) {
+  const hex = color.replace('#', '')
+  if (hex.length !== 6) return color
+
+  const r = Number.parseInt(hex.slice(0, 2), 16)
+  const g = Number.parseInt(hex.slice(2, 4), 16)
+  const b = Number.parseInt(hex.slice(4, 6), 16)
+  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
+
+  return luminance < 0.18 ? '#94a3b8' : color
+}
 
 export default function SkillConstellation() {
   const { data: skills = [] } = useSkills()
@@ -52,6 +64,7 @@ export default function SkillConstellation() {
   useEffect(() => {
     const move = (e: PointerEvent) => {
       if (!dragRef.current.active || !groupRef.current) return
+      e.preventDefault()
 
       const dx = e.clientX - dragRef.current.lastX
       dragRef.current.lastX = e.clientX
@@ -85,8 +98,9 @@ export default function SkillConstellation() {
     }
   })
 
-  function startSpinDrag(e: { clientX: number; stopPropagation: () => void }) {
+  function startSpinDrag(e: { clientX: number; stopPropagation: () => void; preventDefault?: () => void }) {
     e.stopPropagation()
+    e.preventDefault?.()
     dragRef.current.active = true
     dragRef.current.lastX = e.clientX
     dragRef.current.velocity = 0
@@ -138,7 +152,7 @@ function SkillNode({
   node: { name: string; proficiency: number; color: string; category: string; pos: THREE.Vector3 }
   selected: boolean
   onSelect: () => void
-  onSpinDragStart: (e: { clientX: number; stopPropagation: () => void }) => void
+  onSpinDragStart: (e: { clientX: number; stopPropagation: () => void; preventDefault?: () => void }) => void
 }) {
   const meshRef = useRef<THREE.Mesh>(null)
   const [hovered, setHovered] = useState(false)
@@ -153,6 +167,7 @@ function SkillNode({
   })
 
   const size = (0.12 + (node.proficiency / 100) * 0.18) * STAR_SCALE
+  const displayColor = readableSkillColor(node.color)
 
   return (
     <group position={node.pos}>
@@ -171,8 +186,8 @@ function SkillNode({
       >
         <octahedronGeometry args={[size, 0]} />
         <meshStandardMaterial
-          color={node.color}
-          emissive={node.color}
+          color={displayColor}
+          emissive={displayColor}
           emissiveIntensity={selected ? 2.5 : hovered ? 1.5 : 0.8}
           roughness={0.2}
           metalness={0.8}
@@ -187,7 +202,7 @@ function SkillNode({
         <div
           style={{
             background: selected ? 'rgba(15,20,40,0.92)' : hovered ? 'rgba(15,20,40,0.80)' : 'rgba(15,20,40,0.55)',
-            border: `1px solid ${node.color}${selected ? '55' : hovered ? '44' : '22'}`,
+            border: `1px solid ${displayColor}${selected ? '55' : hovered ? '44' : '22'}`,
             borderRadius: selected || hovered ? 12 : 8,
             padding: selected ? '16px 24px' : hovered ? '6px 14px' : '4px 10px',
             color: '#e2e8f0',
@@ -196,7 +211,7 @@ function SkillNode({
             transition: 'all 0.2s',
           }}
         >
-          <div style={{ color: node.color, fontWeight: 700, fontSize: (selected ? 12 : hovered ? 9 : 7.5) * LABEL_SCALE }}>
+          <div style={{ color: displayColor, fontWeight: 700, fontSize: (selected ? 12 : hovered ? 9 : 7.5) * LABEL_SCALE }}>
             {node.name}
           </div>
           {selected && (

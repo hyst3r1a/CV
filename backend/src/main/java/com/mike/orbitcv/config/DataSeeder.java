@@ -74,7 +74,7 @@ public class DataSeeder implements CommandLineRunner {
             skill("Docker", "DevOps / Systems", 78, "#2496ed"),
             skill("AWS Pipelines", "DevOps / Systems", 78, "#ff9900"),
             skill("CI/CD / GitHub Actions", "DevOps / Systems", 82, "#24292f"),
-            skill("Unity Editor Tooling", "DevOps / Systems", 90, "#111827"),
+            skill("Unity Editor Tooling", "DevOps / Systems", 90, "#94a3b8"),
             skill("Asset Preprocessing Pipelines", "DevOps / Systems", 86, "#f43f5e"),
             skill("IoT / Device Integration", "DevOps / Systems", 76, "#e11d48"),
             skill("Kotlin / Mobile SDK Integration", "DevOps / Systems", 70, "#a855f7"),

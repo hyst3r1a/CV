@@ -34,6 +34,7 @@ export default function App() {
   const handleWheel = useCallback(
     (e: WheelEvent) => {
       if (recruiterMode || adminPage) return
+      if ((window as Window & { __orbitSceneDragLock?: boolean }).__orbitSceneDragLock) return
       e.preventDefault()
       updateScroll(e.deltaY)
     },
@@ -45,11 +46,22 @@ export default function App() {
     const sceneWindow = window as Window & { __orbitSceneDragLock?: boolean }
 
     const onTouchStart = (e: TouchEvent) => {
+      if (sceneWindow.__orbitSceneDragLock) return
+      const target = e.target as HTMLElement | null
+      if (target?.closest('[data-no-page-drag="true"]')) return
       lastY = e.touches[0].clientY
     }
 
     const onTouchMove = (e: TouchEvent) => {
       if (recruiterMode || adminPage) return
+      if (sceneWindow.__orbitSceneDragLock) {
+        e.preventDefault()
+        return
+      }
+
+      const target = e.target as HTMLElement | null
+      if (target?.closest('[data-no-page-drag="true"]')) return
+
       const dy = lastY - e.touches[0].clientY
       lastY = e.touches[0].clientY
       updateScroll(dy, 2)
@@ -87,7 +99,7 @@ export default function App() {
 
     window.addEventListener('wheel', handleWheel, { passive: false })
     window.addEventListener('touchstart', onTouchStart, { passive: true })
-    window.addEventListener('touchmove', onTouchMove, { passive: true })
+    window.addEventListener('touchmove', onTouchMove, { passive: false })
     window.addEventListener('pointerdown', onPointerDown, { passive: true })
     window.addEventListener('pointermove', onPointerMove, { passive: false })
     window.addEventListener('pointerup', onPointerUp, { passive: true })
@@ -121,7 +133,7 @@ export default function App() {
             toneMappingExposure: 1.15,
           }}
           dpr={[1, 1.5]}
-          style={{ background: '#00000a' }}
+          style={{ background: '#00000a', touchAction: 'none' }}
         >
           <OrbitalScene />
         </Canvas>

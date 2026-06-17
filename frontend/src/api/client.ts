@@ -84,7 +84,7 @@ export interface Video {
   id: number
   title: string
   description: string
-  embedUrl: string
+  embedUrl: string | null
   thumbnailUrl: string | null
   projectId: number | null
 }

@@ -6,9 +6,9 @@ import { useStore } from '../store/useStore'
 const stations = [
   { position: new THREE.Vector3(0,   0,  12), lookAt: new THREE.Vector3(0,   0,  0) },
   { position: new THREE.Vector3(4,  -8,  12), lookAt: new THREE.Vector3(0,  -8,  0) },
-  { position: new THREE.Vector3(0, -16,  16), lookAt: new THREE.Vector3(0, -16,  0) },
-  { position: new THREE.Vector3(-6,-30,  12), lookAt: new THREE.Vector3(0, -30,  0) },
-  { position: new THREE.Vector3(0, -50,  12), lookAt: new THREE.Vector3(0, -50,  0) },
+  { position: new THREE.Vector3(0, -19,  18), lookAt: new THREE.Vector3(0, -19,  0) },
+  { position: new THREE.Vector3(-5,-43,  17), lookAt: new THREE.Vector3(0, -43,  0) },
+  { position: new THREE.Vector3(0, -78,  16), lookAt: new THREE.Vector3(0, -78,  0) },
 ]
 
 /** Cubic smoothstep — eliminates linear ramp feel between stations */
@@ -36,7 +36,7 @@ export default function CameraRig() {
   useFrame((state) => {
     const isPortrait = size.width < size.height
     const perspective = camera as THREE.PerspectiveCamera
-    const targetFov = isPortrait ? 70 : 58
+    const targetFov = isPortrait ? 64 : 58
 
     if (Math.abs(perspective.fov - targetFov) > 0.01) {
       perspective.fov = THREE.MathUtils.lerp(perspective.fov, targetFov, 0.08)
@@ -71,7 +71,7 @@ export default function CameraRig() {
     }
 
     if (isPortrait) {
-      swayedPos.z += 4
+      swayedPos.z += 2
     }
 
     camera.position.lerp(swayedPos, 0.055)

@@ -4,7 +4,13 @@ import { useStore } from '../store/useStore'
 import { useSkills, useProjects, useTimeline, useVideos } from '../api/hooks'
 import { api } from '../api/client'
 
-const CATEGORY_ORDER = ['3D / XR', 'Frontend', 'Backend', 'Systems', 'DevOps']
+const CATEGORY_ORDER = [
+  'Omniverse / 3D',
+  'XR Platforms',
+  'Frontend',
+  'Backend',
+  'DevOps / Systems',
+]
 
 export default function RecruiterMode() {
   const toggleRecruiterMode = useStore((s) => s.toggleRecruiterMode)
@@ -185,7 +191,25 @@ export default function RecruiterMode() {
             <h2 className="text-xs text-cyan-400 tracking-widest mb-4 uppercase">Media Showcase</h2>
             <div className="space-y-3">
               {videos.map((v) => {
-                const watchUrl = v.embedUrl.replace('/embed/', '/watch?v=')
+                const watchUrl = v.embedUrl?.replace('/embed/', '/watch?v=')
+
+                if (!watchUrl) {
+                  return (
+                    <div
+                      key={v.id}
+                      className="flex items-start gap-3 p-3 rounded border border-slate-800 opacity-80"
+                      style={{ background: 'rgba(34,211,238,0.02)' }}
+                    >
+                      <span className="text-cyan-400 text-sm mt-0.5">○</span>
+                      <div className="min-w-0">
+                        <div className="text-white text-xs font-semibold truncate">{v.title}</div>
+                        <div className="text-slate-500 text-xs mt-0.5 leading-relaxed">{v.description}</div>
+                      </div>
+                      <span className="text-slate-700 text-xs ml-auto shrink-0">SOON</span>
+                    </div>
+                  )
+                }
+
                 return (
                   <a
                     key={v.id}

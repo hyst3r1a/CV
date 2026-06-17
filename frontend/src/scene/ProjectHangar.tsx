@@ -5,14 +5,14 @@ import * as THREE from 'three'
 import { useProjects } from '../api/hooks'
 import type { Project } from '../api/client'
 
-const STATION_Y = -16
+const STATION_Y = -19
 
-const CARD_W    = 430
-const CARD_H    = 300
-const CARD_GAP  = 28
+const CARD_W    = 500
+const CARD_H    = 340
+const CARD_GAP  = 32
 const STRIDE    = CARD_W + CARD_GAP
-const VIEWPORT_W = 1080
-const VIEWPORT_H = 370
+const VIEWPORT_W = 1240
+const VIEWPORT_H = 420
 
 const reducedMotion =
   typeof window !== 'undefined' &&
@@ -24,7 +24,7 @@ export default function ProjectHangar() {
   const panelRef = useRef<THREE.Group>(null)
   const [activeIdx, setActiveIdx] = useState(0)
   const isPortrait = size.width < size.height
-  const panelScale = isPortrait ? Math.min(0.72, Math.max(0.42, (size.width - 28) / VIEWPORT_W)) : 1
+  const panelScale = isPortrait ? Math.min(0.86, Math.max(0.58, (size.width - 28) / VIEWPORT_W)) : 1
 
   useFrame((state) => {
     if (!panelRef.current || reducedMotion) return
@@ -38,7 +38,7 @@ export default function ProjectHangar() {
       <Html
         position={[0, 2.5, 0]}
         center
-        distanceFactor={14}
+        distanceFactor={20}
         style={{ pointerEvents: 'none' }}
       >
         <div
@@ -59,7 +59,7 @@ export default function ProjectHangar() {
       {/* Carousel */}
       <Html
         center
-        distanceFactor={13}
+        distanceFactor={22}
         position={[0, 0, 0.06]}
         style={{
           width: VIEWPORT_W,
@@ -105,6 +105,7 @@ function Carousel({
   const startTx    = useRef(0)
   const currentTx  = useRef(0)
   const wheelSnapTimer = useRef<number | null>(null)
+  const sceneWindow = window as Window & { __orbitSceneDragLock?: boolean }
 
   /* Centre the active card in the viewport */
   const centreOffset = (VIEWPORT_W - CARD_W) / 2
@@ -132,6 +133,7 @@ function Carousel({
     if (target.closest('[data-carousel-control="true"]')) return
 
     isDragging.current = true
+    sceneWindow.__orbitSceneDragLock = true
     startX.current  = e.clientX
     startTx.current = currentTx.current
     ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
@@ -139,18 +141,23 @@ function Carousel({
 
   function onPointerMove(e: React.PointerEvent) {
     if (!isDragging.current) return
+    e.stopPropagation()
+    e.preventDefault()
     const tx = clamp(startTx.current + (e.clientX - startX.current))
     applyTransform(tx, false)
   }
 
   function onPointerUp(e: React.PointerEvent) {
     if (!isDragging.current) return
+    e.stopPropagation()
     isDragging.current = false
+    sceneWindow.__orbitSceneDragLock = false
     const delta = e.clientX - startX.current
-    if (Math.abs(delta) > 40) {
-      snapTo(delta < 0 ? activeIdx + 1 : activeIdx - 1)
-    } else {
-      snapTo(activeIdx)
+    const nearestIdx = Math.round(Math.abs(currentTx.current) / STRIDE)
+    const flickIdx = delta < -70 ? nearestIdx + 1 : delta > 70 ? nearestIdx - 1 : nearestIdx
+    snapTo(flickIdx)
+    if ((e.currentTarget as HTMLElement).hasPointerCapture(e.pointerId)) {
+      ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
     }
   }
 
@@ -177,6 +184,16 @@ function Carousel({
     }, 120)
   }
 
+  function onPointerCancel(e: React.PointerEvent) {
+    if (!isDragging.current) return
+    isDragging.current = false
+    sceneWindow.__orbitSceneDragLock = false
+    snapTo(activeIdx)
+    if ((e.currentTarget as HTMLElement).hasPointerCapture(e.pointerId)) {
+      ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
+    }
+  }
+
   return (
     <div
       data-no-page-drag="true"
@@ -188,11 +205,12 @@ function Carousel({
         fontFamily: 'JetBrains Mono, monospace',
         cursor: 'grab',
         boxSizing: 'border-box',
+        touchAction: 'none',
       }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
+      onPointerCancel={onPointerCancel}
       onWheel={onWheel}
     >
       {/* Card track */}
@@ -203,7 +221,7 @@ function Carousel({
           gap: CARD_GAP,
           transform: `translateX(${centreOffset}px)`,
           height: CARD_H,
-          marginTop: (VIEWPORT_H - CARD_H - 42) / 2,
+          marginTop: (VIEWPORT_H - CARD_H - 48) / 2,
           alignItems: 'stretch',
         }}
       >
@@ -222,7 +240,7 @@ function Carousel({
         onPointerDown={(e) => e.stopPropagation()}
         style={{
           position: 'absolute',
-          bottom: 10,
+          bottom: 12,
           left: 0,
           right: 0,
           display: 'flex',
@@ -289,8 +307,8 @@ function NavButton({
         if (!disabled) onClick()
       }}
       style={{
-        width: 32,
-        height: 26,
+        width: 36,
+        height: 30,
         display: 'grid',
         placeItems: 'center',
         borderRadius: 4,
@@ -298,7 +316,7 @@ function NavButton({
         background: disabled ? 'rgba(6,12,30,0.32)' : 'rgba(6,12,30,0.82)',
         color: disabled ? 'rgba(148,163,184,0.35)' : '#67e8f9',
         cursor: disabled ? 'default' : 'pointer',
-        fontSize: 22,
+        fontSize: 25,
         lineHeight: 1,
         fontFamily: 'JetBrains Mono, monospace',
         boxShadow: disabled ? 'none' : '0 0 10px rgba(34,211,238,0.16)',
@@ -330,7 +348,7 @@ function CarouselCard({
         border: `1px solid ${accent}${isActive ? '38' : '18'}`,
         borderTop: `2px solid ${accent}`,
         borderRadius: 6,
-        padding: '19px 22px 15px',
+        padding: '22px 25px 18px',
         boxSizing: 'border-box',
         position: 'relative',
         overflow: 'hidden',
@@ -369,7 +387,7 @@ function CarouselCard({
 
       <div style={{ position: 'relative', zIndex: 1 }}>
         {/* Badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 10 }}>
           <div
             style={{
               width: 8,
@@ -382,7 +400,7 @@ function CarouselCard({
           />
           <span
             style={{
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: 700,
               color: accent,
               letterSpacing: 2,
@@ -396,10 +414,10 @@ function CarouselCard({
         {/* Title */}
         <div
           style={{
-            fontSize: 19,
+            fontSize: 22,
             fontWeight: 700,
             color: '#f1f5f9',
-            marginBottom: 9,
+            marginBottom: 10,
             lineHeight: 1.25,
             display: '-webkit-box',
             WebkitLineClamp: 2,
@@ -414,7 +432,7 @@ function CarouselCard({
         {/* Description */}
         <div
           style={{
-            fontSize: 13.5,
+            fontSize: 15,
             color: '#94a3b8',
             lineHeight: 1.5,
             marginBottom: 11,
@@ -428,7 +446,7 @@ function CarouselCard({
         </div>
 
         {/* Tech tags */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 11 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 12 }}>
           {project.techStack.slice(0, 4).map((t) => (
             <span
               key={t}
@@ -437,7 +455,7 @@ function CarouselCard({
                 border: `1px solid ${accent}28`,
                 borderRadius: 2,
                 padding: '3px 8px',
-                fontSize: 10.5,
+                fontSize: 11.5,
                 color: accent,
               }}
             >
@@ -460,7 +478,7 @@ function CarouselCard({
               href={project.videoUrl}
               target="_blank"
               rel="noreferrer"
-              style={{ color: '#22d3ee', fontSize: 13, textDecoration: 'none' }}
+              style={{ color: '#22d3ee', fontSize: 14, textDecoration: 'none' }}
               onClick={(e) => e.stopPropagation()}
             >
               ▶ Demo
@@ -471,7 +489,7 @@ function CarouselCard({
               href={project.githubUrl}
               target="_blank"
               rel="noreferrer"
-              style={{ color: '#a78bfa', fontSize: 13, textDecoration: 'none' }}
+              style={{ color: '#a78bfa', fontSize: 14, textDecoration: 'none' }}
               onClick={(e) => e.stopPropagation()}
             >
               ⌥ GitHub
