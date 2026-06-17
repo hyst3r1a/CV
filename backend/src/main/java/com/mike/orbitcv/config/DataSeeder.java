@@ -3,11 +3,13 @@ package com.mike.orbitcv.config;
 import com.mike.orbitcv.entity.*;
 import com.mike.orbitcv.repository.*;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
+@ConditionalOnProperty(name = "app.seed.enabled", havingValue = "true", matchIfMissing = true)
 public class DataSeeder implements CommandLineRunner {
 
     private final ProjectRepository projectRepo;

@@ -8,5 +8,5 @@ RUN mvn clean package -DskipTests -q
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=builder /app/target/orbitcv-1.0.0.jar app.jar
-EXPOSE 8080
+EXPOSE 10000
 ENTRYPOINT ["java", "-jar", "app.jar"]
