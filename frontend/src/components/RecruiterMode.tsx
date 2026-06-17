@@ -55,14 +55,14 @@ export default function RecruiterMode() {
       <div className="max-w-3xl mx-auto px-8 py-16 recruiter-content">
         {/* Header */}
         <header className="mb-12 border-b border-slate-800 pb-8">
-          <h1 className="text-3xl font-bold text-white mb-1">Mikle Higaran</h1>
+          <h1 className="text-3xl font-bold text-white mb-1">Mykhailo Gorshenin</h1>
           <p className="text-cyan-400 text-sm tracking-widest mb-4">
             XR ENGINEER · OMNIVERSE DEVELOPER · FULL STACK SYSTEMS
           </p>
           <div className="flex flex-wrap gap-4 text-xs text-slate-500">
             <a href="mailto:miklehigaran@gmail.com" className="hover:text-cyan-400 transition-colors">📧 miklehigaran@gmail.com</a>
-            <span>🔗 github.com/mikle-higaran</span>
-            <span>🌐 orbital-cv.onrender.com</span>
+            <span>🔗 github.com/hyst3r1a</span>
+            <span>🌐 orbital-cv-frontend.onrender.com</span>
           </div>
         </header>
 

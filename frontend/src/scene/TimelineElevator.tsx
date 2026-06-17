@@ -119,6 +119,16 @@ function TimelineNode({
     return geometry
   }, [cardOffset])
 
+  const connectorLine = useMemo(() => {
+    const material = new THREE.LineBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.35,
+    })
+
+    return new THREE.Line(connectorGeometry, material)
+  }, [connectorGeometry, color])
+
   useFrame((state, delta) => {
     if (reducedMotion) return
     const et = state.clock.elapsedTime
@@ -167,9 +177,7 @@ function TimelineNode({
       </mesh>
 
       {/* Connector line */}
-      <line ref={connectorRef} geometry={connectorGeometry}>
-        <lineBasicMaterial color={color} transparent opacity={0.35} />
-      </line>
+      <primitive ref={connectorRef} object={connectorLine} />
 
       {/* Glass card */}
       <group ref={cardGroupRef} position={[cardOffset, 0, 0]}>
